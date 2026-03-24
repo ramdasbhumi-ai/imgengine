@@ -56,16 +56,6 @@ int imgengine_run(img_ctx_t *ctx,
     int rows = job->rows;
     printf("Manual cols=%d rows=%d auto_fit=%d\n", job->cols, job->rows, job->auto_fit);
 
-    // if (job->auto_fit)
-    //     // printf("Auto-fit enabled → ignoring manual cols/rows\n");
-    //     printf("Final layout cols=%d rows=%d\n", cols, rows);
-    // {
-    // layout_autofit(canvas.width, canvas.height,
-    //                bordered.width, bordered.height,
-    //                job->gap, job->padding,
-    //                &cols, &rows);
-    // }
-
     if (job->auto_fit)
     {
         printf("⚠ Auto-fit enabled → overriding cols/rows\n");

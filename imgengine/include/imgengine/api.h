@@ -3,6 +3,10 @@
 #ifndef IMG_API_H
 #define IMG_API_H
 
+int bleed_px;       // extra outer pixels
+int crop_mark_px;   // length of crop mark lines
+int crop_thickness; // line thickness
+
 #include "context.h"
 
 typedef enum

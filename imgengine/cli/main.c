@@ -1,32 +1,3 @@
-// // src/cli/main.c
-
-// #include "imgengine/api.h"
-
-// int main()
-// {
-
-//     img_ctx_t ctx;
-//     img_ctx_init(&ctx, 50 * 1024 * 1024);
-
-//     img_job_t job = {
-//         .photo_w_cm = 4.5,
-//         .photo_h_cm = 3.5,
-//         .dpi = 300,
-//         .cols = 2,
-//         .rows = 3,
-//         .gap = 15,
-//         .border_px = 2,
-//         .mode = IMG_FILL,
-//         .bg_r = 255,
-//         .bg_g = 255,
-//         .bg_b = 255};
-
-//     imgengine_run(&ctx, "input.jpg", "output.png", &job);
-
-//     img_ctx_destroy(&ctx);
-//     return 0;
-// }
-
 // src/cli/main.c
 
 #include <stdio.h>
@@ -43,6 +14,9 @@
 #define DEFAULT_W_CM 4.5f
 #define DEFAULT_H_CM 3.5f
 #define DEFAULT_PADDING 20
+#define BLEED_PX = 10
+#define CROP_MARK_PX = 20
+#define CROP_CHICKNESS = 2
 
 static void print_usage()
 {

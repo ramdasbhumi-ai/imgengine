@@ -57,6 +57,5 @@ Loading image: input.jpg
 
 rm -rf build
 mkdir build && cd build
-
 cmake ..
 make
