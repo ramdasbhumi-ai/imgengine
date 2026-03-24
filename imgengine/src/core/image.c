@@ -5,13 +5,6 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 
-// int img_load(const char *path, img_t *img)
-// {
-//     img->data = stbi_load(path, &img->width, &img->height, &img->channels, 3);
-//     img->channels = 3;
-//     return img->data != NULL;
-// }
-
 #include <stdio.h>
 
 int img_load(const char *path, img_t *img)

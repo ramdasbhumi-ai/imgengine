@@ -27,39 +27,40 @@
 
     curl -L -o input.jpg https://picsum.photos/800
 
-### RUN LIKE THIS
+### HOW TO RUN (INDUSTRY STYLE)
+
+    ./imgengine_cli --input in.jpg --output out.png
+
+### Your case (A4 passport grid)
 
     ./imgengine_cli \
-  --input ../input.jpg \
-  --cols 6 \
-  --rows 6 \
-  --gap 10 \
-  --width 3.5 \
-  --height 3.0 \
-  --padding 10
+    --input ../input.jpg \
+    --output final_output.png \
+    --cols 6 \
+    --rows 2 \
+    --gap 15 \
+    --width 3.5 \
+    --height 3.0 \
+    --padding 20
 
- ./imgengine_cli \
-  --input ../input.jpg \
-  --output finel_output.png \
-  --cols 6 \
-  --rows  \
-  --gap 10 \
-  --width 3.5 \
-  --height 3.0 \
-  --padding 10
+### ✔ PRO PRINT MODE (recommended)
 
+    ./imgengine_cli \
+    --input ../input.jpg \
+    --output final_output.png \
+    --cols 6 \
+    --rows 2 \
+    --gap 15 \
+    --width 3.5 \
+    --height 3.0 \
+    --padding 20 \
+    --bleed 10 \
+    --crop-mark 25 \
+    --crop-thick 2
 
+### Help menu
+    ./imgengine_cli --help
 
-  @Rofikali ➜ /workspaces/imgengine/imgengine/build (main) $ ./imgengine_cli   --input input.jpg   --output final_putput.png   --cols 1   --rows 6   --gap 20 --width 4.0 --height 3.0 --border 5
-Loading image: input.jpg
-✅ Output generated: final_putput.png
-
-
-
+cd ..
 rm -rf build
-mkdir build && cd build
-cmake ..
-make
-
-rm -rf build 
 rm -rf build && mkdir build && cd build && cmake .. && make

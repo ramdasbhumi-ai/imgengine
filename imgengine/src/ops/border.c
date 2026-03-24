@@ -1,34 +1,4 @@
-// #include "imgengine/image.h"
-// #include <string.h>
-
-// void img_add_border(img_t *img, int border)
-// {
-
-//     int nw = img->width + 2 * border;
-//     int nh = img->height + 2 * border;
-
-//     unsigned char *new_data = malloc(nw * nh * 3);
-
-//     memset(new_data, 0, nw * nh * 3); // black
-
-//     for (int y = 0; y < img->height; y++)
-//     {
-//         for (int x = 0; x < img->width; x++)
-//         {
-
-//             int src_i = (y * img->width + x) * 3;
-//             int dst_i = ((y + border) * nw + (x + border)) * 3;
-
-//             new_data[dst_i + 0] = img->data[src_i + 0];
-//             new_data[dst_i + 1] = img->data[src_i + 1];
-//             new_data[dst_i + 2] = img->data[src_i + 2];
-//         }
-//     }
-
-//     img->width = nw;
-//     img->height = nh;
-//     img->data = new_data;
-// }
+// src/ops/border
 
 #include "imgengine/image.h"
 #include <string.h>

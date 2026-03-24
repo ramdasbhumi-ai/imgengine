@@ -1,33 +1,4 @@
-// #include "imgengine/image.h"
-
-// void img_center_crop(const img_t *src, img_t *dst,
-//                      int target_w, int target_h)
-// {
-
-//     float src_ratio = (float)src->width / src->height;
-//     float dst_ratio = (float)target_w / target_h;
-
-//     int crop_w, crop_h;
-//     int x_off = 0, y_off = 0;
-
-//     if (src_ratio > dst_ratio)
-//     {
-//         crop_h = src->height;
-//         crop_w = (int)(crop_h * dst_ratio);
-//         x_off = (src->width - crop_w) / 2;
-//     }
-//     else
-//     {
-//         crop_w = src->width;
-//         crop_h = (int)(crop_w / dst_ratio);
-//         y_off = (src->height - crop_h) / 2;
-//     }
-
-//     dst->width = crop_w;
-//     dst->height = crop_h;
-//     dst->channels = 3;
-//     dst->data = src->data + (y_off * src->width + x_off) * 3;
-// }
+// src/ops/crop.c
 
 #include "imgengine/image.h"
 

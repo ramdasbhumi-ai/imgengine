@@ -34,7 +34,7 @@ int imgengine_run(img_ctx_t *ctx,
     if (job->dpi <= 0 || job->photo_w_cm <= 0 || job->photo_h_cm <= 0)
         return IMG_ERR_INVALID;
 
-    printf("Loading image: %s\n", input);
+    // printf("Loading image: %s\n", input);
 
     img_t src;
     if (!img_load(input, &src))
@@ -66,9 +66,6 @@ int imgengine_run(img_ctx_t *ctx,
     int cols = job->cols;
     int rows = job->rows;
 
-<<<<<<< HEAD
-    if (job->auto_fit)
-=======
     printf("Manual layout cols=%d rows=%d\n", cols, rows);
 
     // 🔥 STRICT PRECHECK (NO AUTO FIX)
@@ -87,14 +84,15 @@ int imgengine_run(img_ctx_t *ctx,
                            job->gap, job->padding);
 
     if (!fits)
->>>>>>> main
     {
         printf("⚠ Layout too large → auto scaling applied (fit mode)\n");
         // printf("Scale factor: %.2f\n", scale);
     }
 
-    if (!layout_grid(&canvas, &bordered, cols, rows,
-                     job->gap, job->padding, ctx))
+    // if (!layout_grid(&canvas, &bordered, cols, rows, job->gap, job->padding, ctx))
+    //     return IMG_ERR_INVALID;
+
+    if (!layout_grid(&canvas, &bordered, job, ctx))
         return IMG_ERR_INVALID;
 
     if (!img_save_png(output, &canvas))

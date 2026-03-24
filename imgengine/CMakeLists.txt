@@ -40,6 +40,7 @@ set(IMGENGINE_PRIVATE_SOURCES
     # layout
     src/layout/grid_layout.c
     src/layout/auto_fit.c
+    src/layout/crop_marks.c
 
     # io
     src/io/stb_impl.c

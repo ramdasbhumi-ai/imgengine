@@ -1,3 +1,4 @@
+// src/ops/resize.c
 
 #include "imgengine/image.h"
 
