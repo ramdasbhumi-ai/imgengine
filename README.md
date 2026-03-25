@@ -48,24 +48,31 @@ Designed for **print shops, studios, and automation pipelines**, it delivers pre
 
 ### Build
 
-```bash
-git clone https://github.com/Rofikali/imgengine
-cd imgengine
+    --- bash ---
+    git clone https://github.com/Rofikali/imgengine
+    cd imgengine
 
-mkdir build && cd build
-cmake ..
-make
+    mkdir build && cd build
+    cmake ..
+    make
 
 ## Run
+
     ./imgengine_cli --help
+
 ## 🧑‍💻 Usage
+
     Basic Syntax
     imgengine_cli --input <file> [--output <file>] [OPTIONS]
+
 ## 📥 Input / Output
+
     Type Supported Formats
     Input JPG, PNG
     Output PNG, PDF
+
 ## ⚙️ Configuration Options
+
     🔹 Required
     Option Description
     --input Input image file
@@ -73,25 +80,33 @@ make
     Option Description Default
     --output Output file (png/pdf) output.png
     --quiet Disable logs off
-##  Layout
+
+## Layout
+
     Option Description Default
     --cols Number of columns 2
     --rows Number of rows 3
     --gap Space between photos (px) 15
     --padding Page margin (px) 20
+
 ## 🔹 Photo Settings
+
     Option Description Default
     --width Photo width (cm) 4.5
     --height Photo height (cm) 3.5
     --dpi Print DPI 300
     --border Border thickness (px) 2
+
 ## 🔹 Professional Print
+
     Option Description Default
     --bleed Extra pixels for cutting safety 10
     --crop-mark Crop mark length 20
     --crop-thickness Crop mark thickness 2
     --crop-offset Distance from image edge 8
+
 ## 🧠 Processing Pipeline
+
     Input Image
        ↓
     Center Crop
@@ -105,7 +120,9 @@ make
     Plugin System (Bleed + Crop Marks)
        ↓
     Final Output (PNG / PDF)
+
 ## 🧪 Examples
+
     1. Passport Sheet
     imgengine_cli --input photo.jpg --cols 3 --rows 2
     2. Studio Layout (A4)
@@ -134,7 +151,9 @@ make
       --cols 6 \
       --rows 2 \
       --bleed 10
+
 ## 🚀 Architecture
+
     Core Components
     Context System
     Central memory pool
@@ -147,25 +166,32 @@ make
     Bleed rendering
     SIMD Layer
     AVX2 accelerated image operations
+
 ## ⚡ Performance
+
     Memory pool allocation (no malloc overhead)
     SIMD optimized blitting and resizing
     Designed for batch processing workflows
+
 ## 📝 Best Practices
+
     Use 300 DPI for professional printing
     Always enable:
     --bleed
     --crop-mark
     Keep gap ≥ 10px for safe cutting
+
 ## 🔮 Roadmap
+
      Batch multi-image input
      ISO passport presets
      GUI (Electron / Web UI)
      CMYK color support
      Cloud API (FastAPI integration)
-## 🤝 Contributing
-    Pull requests are welcome.
 
+## 🤝 Contributing
+
+    Pull requests are welcome.
 
 ## 📄 License
 
