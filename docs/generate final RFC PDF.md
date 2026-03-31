@@ -354,6 +354,7 @@
     +-- plugin_crop.c
     +-- plugin_bleed.c
     +-- plugin_pdf.c
+        plugin_rigistry.c
     Design:
     compiled into binary
     registered at startup

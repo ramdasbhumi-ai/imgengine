@@ -1,54 +1,3 @@
-# # imgengine/CMakeLists.txt
-# cmake_minimum_required(VERSION 3.10)
-# project(imgengine C)
-
-# set(CMAKE_C_STANDARD 11)
-
-# # Optimization & Hardening Flags
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native -Wall -Wextra -Werror")
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fno-plt -fPIC")
-
-# # Standard Search Paths
-# include_directories(
-#     api/v1 
-#     src/ 
-#     include/ 
-#     memory/ 
-#     runtime/ 
-#     arch/
-#     pipeline/
-#     plugins/
-#     io/
-# )
-
-# # Find External Dependencies
-# find_package(Threads REQUIRED)
-# find_library(TURBOJPEG_LIB NAMES turbojpeg)
-
-# # Collect all internal source files
-# file(GLOB_RECURSE ENGINE_SOURCES 
-#     "src/*.c" 
-#     "arch/*.c" 
-#     "pipeline/*.c" 
-#     "plugins/*.c" 
-#     "io/*.c" 
-#     "runtime/*.c" 
-#     "memory/*.c"
-# )
-
-# # 1. Generate the Shared Library (v1.0 API)
-# add_library(imgengine SHARED ${ENGINE_SOURCES})
-# target_link_libraries(imgengine PRIVATE Threads::Threads ${TURBOJPEG_LIB} m)
-
-# # 2. Generate the CLI Executable
-# add_executable(imgengine_cli cmd/imgengine/main.c cmd/imgengine/args.c)
-# target_link_libraries(imgengine_cli PRIVATE imgengine)
-
-# # 3. Performance Benchmarking Tool
-# add_executable(bench_lat cmd/bench/lat_bench.c)
-# target_link_libraries(bench_lat PRIVATE imgengine)
-
-
 cmake_minimum_required(VERSION 3.10)
 project(imgengine C)
 
@@ -92,6 +41,17 @@ find_package(Threads REQUIRED)
 # Reliable search for TurboJPEG on Ubuntu/Codespaces
 find_path(TURBOJPEG_INCLUDE_DIR NAMES turbojpeg.h)
 find_library(TURBOJPEG_LIB NAMES turbojpeg)
+
+
+# Replace the old find_library block with this:
+find_path(TURBOJPEG_INCLUDE_DIR NAMES turbojpeg.h)
+find_library(TURBOJPEG_LIB NAMES turbojpeg)
+
+# if(NOT TURBOJPEG_LIB)
+#     message(FATAL_ERROR "libturbojpeg not found. Run: sudo apt-get install libturbojpeg0-dev")
+# endif()
+
+include_directories(${TURBOJPEG_INCLUDE_DIR})
 
 # if(NOT TURBOJPEG_LIB)
 #     message(FATAL_ERROR "libturbojpeg not found. Run: sudo apt-get install libturbojpeg0-dev")

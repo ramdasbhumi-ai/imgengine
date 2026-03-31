@@ -15,11 +15,11 @@
     │   └── runtime/
     │       ├── worker_state.h
     │       └── spsc_barrier.h   # Atomic fence definitions
-    ├── cmd/                        # EXECUTABLES (The "Main" entry points)
+    ├── md/                        # EXECUTABLES (The "Main" entry points)
     │   ├── imgengine/              # THE PRIMARY CLI TOOL
     │   │   ├── main.c              # Argument parsing & worker bootstrap
     │   │   ├── args.c/h            # getopt_long logic (Kernel-grade CLI flags)
-    │   │   └── shell.c/h           # Interactive mode (for debugging)
+    │   │   └── shell.c/h c          # Interactive mode (for debugging)
     │   └── bench/                  # PERFORMANCE SUITE
     │       ├── lat_bench.c         # P99 Latency measuring tool
     │       └── thr_bench.c         # 100K ops/sec stress tester
