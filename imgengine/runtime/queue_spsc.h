@@ -5,23 +5,20 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/**
- * @brief Opaque handle for the Single-Producer Single-Consumer queue.
- */
 typedef struct img_queue img_queue_t;
 
 /**
- * @brief Creates a lock-free queue with capacity 2^power_of_two.
+ * Capacity = 2^power
  */
-img_queue_t *img_queue_create(uint32_t power_of_two);
+img_queue_t *img_queue_create(uint32_t power);
 
 /**
- * @brief Non-blocking push. Returns false if the queue is full.
+ * Non-blocking push
  */
 bool img_queue_push(img_queue_t *q, void *data);
 
 /**
- * @brief Non-blocking pop. Returns NULL if the queue is empty.
+ * Non-blocking pop
  */
 void *img_queue_pop(img_queue_t *q);
 

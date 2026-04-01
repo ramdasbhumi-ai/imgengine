@@ -1,32 +1,25 @@
-/* src/core/context.c */
-#include "core/context.h" // Removed "src/" prefix
+#include "core/context.h"
 #include "memory/slab.h"
-#include "core/dispatcher.h" // Removed "src/" prefix
 #include <stdlib.h>
 
-img_ctx_t *img_ctx_init(uint32_t worker_id, size_t slab_size, size_t num_slabs)
+img_ctx_t *img_ctx_create(uint32_t thread_id)
 {
     img_ctx_t *ctx = malloc(sizeof(img_ctx_t));
     if (!ctx)
         return NULL;
 
-    ctx->worker_id = worker_id;
-
-    // 1. Initialize thread-local Slab Allocator (Zero Fragmentation)
-    // ctx->pool = img_slab_init(slab_size, num_slabs);
-    img_slab_pool_t *img_slab_init(size_t block_size, size_t num_blocks, int numa_node);
-
-    // 2. Cache CPU capabilities for O(1) dispatching
-    ctx->cpu_caps = img_get_cpu_arch();
+    ctx->thread_id = thread_id;
+    ctx->pool = img_slab_create(64 * 1024 * 1024); // 64MB
+    ctx->cpu_caps = img_detect_cpu();
 
     return ctx;
 }
 
 void img_ctx_destroy(img_ctx_t *ctx)
 {
-    if (ctx)
-    {
-        img_slab_destroy(ctx->pool);
-        free(ctx);
-    }
+    if (!ctx)
+        return;
+
+    img_slab_destroy(ctx->pool);
+    free(ctx);
 }

@@ -1,20 +1,8 @@
 /* src/core/config.h */
+#ifndef IMGENGINE_CORE_CONFIG_H
+#define IMGENGINE_CORE_CONFIG_H
 
-#include <stdbool.h>
-typedef struct
-{
-    uint32_t batch_size;      // Default: 8
-    uint32_t prefetch_stride; // Default: 2 (cache lines)
-    bool use_hugepages;       // Default: true
-} img_config_t;
+#define IMG_MAX_WORKERS 64
+#define IMG_DEFAULT_BLOCK_SIZE (64 * 1024 * 1024)
 
-/* src/core/config.c */
-img_config_t g_config = {
-    .batch_size = 8,
-    .prefetch_stride = 2,
-    .use_hugepages = true};
-
-void img_config_load_defaults()
-{
-    // Potentially load from environment variables for SaaS scaling
-}
+#endif

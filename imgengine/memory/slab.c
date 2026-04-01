@@ -1,61 +1,67 @@
-
 /* memory/slab.c */
+#include "memory/slab.h"
 #include <stdlib.h>
-#include "memory/memory.h"
-#include "observability/metrics.h"
+#include <string.h>
+#include <stdalign.h>
 
-typedef struct slab_node
+typedef struct slab_block
 {
-    struct slab_node *next;
-} slab_node_t;
+    struct slab_block *next;
+} slab_block_t;
 
 struct img_slab_pool
 {
-    void *raw_region;
-    slab_node_t *free_list;
-    size_t block_size;
+    slab_block_t *free_list;
+    void *memory;
     size_t total_size;
-    uint64_t in_use_count; // Added for Health Check
+    size_t block_size;
+    size_t block_count;
 };
 
-img_slab_pool_t *img_slab_init(size_t block_size, size_t num_blocks, int node)
+img_slab_pool_t *img_slab_create(size_t total_size, size_t block_size)
 {
     img_slab_pool_t *pool = malloc(sizeof(img_slab_pool_t));
-    pool->block_size = (block_size + 63) & ~63;
-    pool->total_size = pool->block_size * num_blocks;
-    pool->in_use_count = 0;
+    if (!pool)
+        return NULL;
 
-    pool->raw_region = img_hugepage_alloc(pool->total_size);
-    pool->free_list = (slab_node_t *)pool->raw_region;
+    // Align block size to 64 bytes
+    block_size = (block_size + 63) & ~63;
 
-    slab_node_t *curr = pool->free_list;
-    for (size_t i = 0; i < num_blocks - 1; i++)
+    pool->memory = aligned_alloc(64, total_size);
+    pool->total_size = total_size;
+    pool->block_size = block_size;
+    pool->block_count = total_size / block_size;
+    pool->free_list = NULL;
+
+    // Initialize free list
+    uint8_t *ptr = (uint8_t *)pool->memory;
+    for (size_t i = 0; i < pool->block_count; i++)
     {
-        curr->next = (slab_node_t *)((uint8_t *)curr + pool->block_size);
-        curr = curr->next;
+        slab_block_t *block = (slab_block_t *)(ptr + i * block_size);
+        block->next = pool->free_list;
+        pool->free_list = block;
     }
-    curr->next = NULL;
+
     return pool;
 }
 
-void *img_slab_alloc(img_slab_pool_t *pool)
+uint8_t *img_slab_alloc(img_slab_pool_t *pool)
 {
-    if (!pool->free_list)
+    if (!pool || !pool->free_list)
         return NULL;
 
-    void *ptr = pool->free_list;
-    pool->free_list = pool->free_list->next;
+    slab_block_t *block = pool->free_list;
+    pool->free_list = block->next;
 
-    // ATOMIC: Principal-level occupancy tracking
-    __atomic_add_fetch(&pool->in_use_count, 1, __ATOMIC_RELAXED);
-    return ptr;
+    return (uint8_t *)block;
 }
 
 void img_slab_free(img_slab_pool_t *pool, void *ptr)
 {
-    slab_node_t *node = (slab_node_t *)ptr;
-    node->next = pool->free_list;
-    pool->free_list = node;
+    if (!pool || !ptr)
+        return;
 
-    __atomic_sub_fetch(&pool->in_use_count, 1, __ATOMIC_RELAXED);
+    slab_block_t *block = (slab_block_t *)ptr;
+    block->next = pool->free_list;
+    pool->free_list = block;
 }

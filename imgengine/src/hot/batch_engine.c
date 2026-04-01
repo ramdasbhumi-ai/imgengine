@@ -1,19 +1,22 @@
-/* src/hot/batch_engine.c */
-#include "hot/batch.h"
+#include "hot/batch_engine.h"
+#include "pipeline/jump_table.h"
 
-void img_batch_process_hot(img_ctx_t *ctx, img_batch_t *batch, img_pipeline_t *pipe)
+void img_batch_process_hot(
+    img_ctx_t *ctx,
+    img_batch_t *batch,
+    img_pipeline_graph_t *pipe)
 {
-    // Prefetch all headers into L1 Cache before starting
-    for (uint32_t i = 0; i < batch->count; ++i)
+    for (uint32_t i = 0; i < batch->count; i++)
     {
         __builtin_prefetch(batch->buffers[i], 0, 3);
     }
 
-    // Execute the pipeline across the batch
-    // This calls Batch-Aware SIMD kernels (AVX-512)
-    for (uint32_t j = 0; j < pipe->count; ++j)
+    for (uint32_t j = 0; j < pipe->node_count; j++)
     {
-        img_batch_op_fn batch_op = g_batch_jump_table[pipe->ops[j].op_code];
-        batch_op(ctx, batch, pipe->ops[j].params);
+        img_batch_op_fn fn =
+            g_batch_jump_table[pipe->nodes[j].op_code];
+
+        if (fn)
+            fn(ctx, batch, pipe->nodes[j].params);
     }
 }

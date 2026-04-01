@@ -2,31 +2,52 @@
 #ifndef IMGENGINE_API_CORE_H
 #define IMGENGINE_API_CORE_H
 
-#include "img_types.h"
+#include <stdint.h>
 #include "img_error.h"
+#include "img_types.h"
+#include "img_pipeline.h"
 
-/**
- * @brief Opaque handle to the engine instance.
- * Hides all internal Slab and Worker details.
- */
-typedef struct img_engine_s *img_engine_t;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-/**
- * @brief Initialize the engine.
- * @param num_workers Number of physical cores to pin.
- * @return Handle to engine or NULL if Slab allocation fails.
- */
-img_engine_t img_api_init(uint32_t num_workers);
+    // Opaque Engine Handle
+    typedef struct img_engine_s *img_engine_t;
 
-/**
- * @brief The "Fast Path" execution.
- * Decodes, Resizes (SIMD), and Encodes in a single non-blocking pass.
- */
-img_result_t img_api_process_fast(img_engine_t engine,
-                                  const char *in_path,
-                                  const char *out_path,
-                                  uint32_t w, uint32_t h);
+    /**
+     * @brief Initialize engine with N workers
+     */
+    img_engine_t img_api_init(uint32_t workers);
 
-void img_api_shutdown(img_engine_t engine);
+    /**
+     * @brief Shutdown engine and free resources
+     */
+    void img_api_shutdown(img_engine_t engine);
+
+    /**
+     * @brief Fast path processing (file → file)
+     */
+    img_result_t img_api_process_fast(
+        img_engine_t engine,
+        const char *input_path,
+        const char *output_path,
+        uint32_t width,
+        uint32_t height);
+
+    /**
+     * @brief Advanced pipeline execution (future SaaS API)
+     */
+    img_result_t img_api_process_pipeline(
+        img_engine_t engine,
+        const uint8_t *input,
+        size_t input_size,
+        img_pipeline_desc_t *pipeline,
+        uint8_t **output,
+        size_t *output_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

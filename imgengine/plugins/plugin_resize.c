@@ -1,37 +1,33 @@
-
-/* plugins/plugin_resize.c */
 #include "plugins/plugin_internal.h"
 #include "arch/arch_kernels.h"
 #include "memory/slab.h"
 #include "core/image.h"
 
-// Defined here to keep the Arch layer decoupled from Plugin logic
 typedef struct
 {
     uint32_t target_w;
     uint32_t target_h;
 } resize_params_t;
 
-/**
- * @brief Logic for single image resize.
- * Allocates new Slab memory, runs SIMD, then swaps pointers.
- */
 void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params)
 {
-    if (!params || !buf || !ctx)
+    if (!ctx || !buf || !params)
         return;
+
     resize_params_t *p = (resize_params_t *)params;
 
-    // 1. ALLOCATE: Get a fresh block for the result
-    // Note: img_slab_alloc is O(1)
+    // Allocate new slab (O(1))
     uint8_t *out_mem = img_slab_alloc(ctx->pool);
     if (!out_mem)
         return;
 
-    // 2. WRAP: Apply the 64-byte alignment rule for the new buffer
-    img_buffer_t dst = img_buffer_create(out_mem, p->target_w, p->target_h, buf->channels);
+    img_buffer_t dst = img_buffer_create(
+        out_mem,
+        p->target_w,
+        p->target_h,
+        buf->channels);
 
-    // 3. DISPATCH: Call the silicon-specific kernel
+    // Hardware dispatch (branch once)
     switch (ctx->cpu_caps)
     {
     case ARCH_AVX512:
@@ -48,17 +44,16 @@ void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params)
         break;
     }
 
-    // 4. SWAP: Release the old buffer and update the metadata
+    // Swap buffers (zero-copy style)
     img_slab_free(ctx->pool, buf->data);
     *buf = dst;
 }
 
-/**
- * @brief Logic for batch (8-way) resize.
- */
 void plugin_resize_batch(img_ctx_t *ctx, img_batch_t *batch, void *params)
 {
     if (!ctx || !batch || !params)
         return;
+
+    // AVX-512 batch kernel (8-way)
     img_arch_batch_resize(ctx, batch, params);
 }

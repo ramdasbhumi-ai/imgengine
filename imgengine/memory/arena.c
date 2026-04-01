@@ -1,20 +1,25 @@
 /* memory/arena.c */
-#include "memory.h"
+#include "memory/arena.h"
 
-struct img_arena
+void img_arena_init(img_arena_t* arena, void* memory, size_t size)
 {
-    uint8_t *data;
-    size_t capacity;
-    size_t offset;
-};
+    arena->base = (uint8_t*)memory;
+    arena->size = size;
+    arena->offset = 0;
+}
 
-void *img_arena_alloc(img_arena_t *arena, size_t size)
+void* img_arena_alloc(img_arena_t* arena, size_t size)
 {
-    size_t aligned_size = (size + 7) & ~7; // 8-byte alignment
-    if (arena->offset + aligned_size > arena->capacity)
+    if (arena->offset + size > arena->size)
         return NULL;
 
-    void *ptr = &arena->data[arena->offset];
-    arena->offset += aligned_size;
+    void* ptr = arena->base + arena->offset;
+    arena->offset += size;
+
     return ptr;
+}
+
+void img_arena_reset(img_arena_t* arena)
+{
+    arena->offset = 0;
 }

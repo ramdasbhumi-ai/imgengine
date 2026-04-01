@@ -1,16 +1,14 @@
-/* plugins/plugin_internal.h */
 #ifndef IMGENGINE_PLUGINS_INTERNAL_H
 #define IMGENGINE_PLUGINS_INTERNAL_H
 
 #include "pipeline/pipeline.h"
 
-// OpCodes (Standardized across the engine)
+// Unified OpCodes (Engine-wide contract)
 #define OP_RESIZE 0x01
 #define OP_CROP 0x02
-#define OP_BLEED 0x03
-#define OP_PDF 0x04
+#define OP_GRAYSCALE 0x03
 
-// Plugin Registry Entry
+// Plugin descriptor (future dynamic loading support)
 typedef struct
 {
     uint32_t op_code;
@@ -19,11 +17,13 @@ typedef struct
     img_batch_op_fn batch_exec;
 } img_plugin_info_t;
 
-// Global Registration Hook
+// Global registration entrypoint
 void img_plugins_init_all(void);
 
-// Prototypes for static registration
-void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params);
-void plugin_crop_single(img_ctx_t *ctx, img_buffer_t *buf, void *params);
+// Plugin prototypes
+void plugin_resize_single(img_ctx_t *, img_buffer_t *, void *);
+void plugin_resize_batch(img_ctx_t *, img_batch_t *, void *);
+void plugin_crop_single(img_ctx_t *, img_buffer_t *, void *);
+void plugin_grayscale_single(img_ctx_t *, img_buffer_t *, void *);
 
 #endif

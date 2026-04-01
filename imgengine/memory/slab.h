@@ -1,9 +1,25 @@
-
 /* memory/slab.h */
-#ifndef IMGENGINE_SLAB_BRIDGE_H
-#define IMGENGINE_SLAB_BRIDGE_H
+#ifndef IMGENGINE_MEMORY_SLAB_H
+#define IMGENGINE_MEMORY_SLAB_H
 
-// Redirect to your master memory header
-#include "memory/memory.h"
+#include <stddef.h>
+#include <stdint.h>
+
+typedef struct img_slab_pool img_slab_pool_t;
+
+/**
+ * @brief Create slab pool
+ */
+img_slab_pool_t *img_slab_create(size_t total_size, size_t block_size);
+
+/**
+ * @brief Allocate one block (O(1))
+ */
+uint8_t *img_slab_alloc(img_slab_pool_t *pool);
+
+/**
+ * @brief Free block back to pool (O(1))
+ */
+void img_slab_free(img_slab_pool_t *pool, void *ptr);
 
 #endif

@@ -26,23 +26,25 @@ The system is built to operate as a **core backend engine**, later exposed via:
 # 2. System Architecture
 
 ```
-API Layer
-   ↓
-Security Validation (L7)
-   ↓
-Scheduler (Backpressure Defense)
-   ↓
-Worker Thread
-   ↓
-[ SECURE SANDBOX (seccomp) ]
-   ↓
-Decode (Validated Input)
-   ↓
-Pipeline (Bounds-Checked SIMD)
-   ↓
+API
+↓
+Validation (security)
+↓
+Scheduler (backpressure)
+↓
+Worker (CPU pinned)
+↓
+[ SECURE SANDBOX ]
+↓
+Decode (safe)
+↓
+Pipeline (SIMD)
+↓
 Encode
-   ↓
+↓
 Output
+↓
+Metrics + Logs + Traces
 ```
 
 ---

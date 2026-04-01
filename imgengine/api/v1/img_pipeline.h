@@ -2,18 +2,23 @@
 #ifndef IMGENGINE_API_PIPELINE_H
 #define IMGENGINE_API_PIPELINE_H
 
-#include "img_core.h"
+#include "img_types.h"
 
-// Opaque handle to a pre-compiled execution graph
-typedef struct img_pipe_s *img_pipe_t;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-/**
- * @brief Compile a sequence of operations into a DAG.
- * Validates hardware support before returning the handle.
- */
-img_pipe_t img_api_pipeline_create(img_engine_t engine);
+    // User-facing builder helpers
 
-void img_api_pipeline_add_resize(img_pipe_t pipe, uint32_t w, uint32_t h);
-void img_api_pipeline_add_grayscale(img_pipe_t pipe);
+    void img_pipeline_init(img_pipeline_desc_t *pipe);
+
+    int img_pipeline_add_op(img_pipeline_desc_t *pipe,
+                            uint32_t op_code,
+                            void *params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

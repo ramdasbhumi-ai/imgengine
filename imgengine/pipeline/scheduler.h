@@ -5,6 +5,11 @@
 #include "pipeline/pipeline.h"
 #include "hot/batch.h"
 
-void img_scheduler_dispatch_batch(img_ctx_t *ctx, img_batch_t *batch, img_pipeline_graph_t *graph);
+/**
+ * Dispatch batch pipeline execution
+ */
+void img_scheduler_dispatch_batch(img_ctx_t *ctx,
+                                  img_batch_t *batch,
+                                  img_pipeline_graph_t *graph);
 
 #endif

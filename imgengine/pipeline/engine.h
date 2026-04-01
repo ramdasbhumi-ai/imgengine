@@ -5,9 +5,10 @@
 #include "pipeline/pipeline.h"
 
 /**
- * @brief Standard execution orchestrator.
- * Used for building and executing the instruction graph.
+ * Execute pipeline graph (single image)
  */
-void img_pipeline_execute(img_ctx_t *ctx, img_pipeline_graph_t *graph, img_buffer_t *buf);
+void img_pipeline_execute(img_ctx_t *ctx,
+                          img_pipeline_graph_t *graph,
+                          img_buffer_t *buf);
 
 #endif
