@@ -171,3 +171,28 @@ make
     --bleed 10 \
     --crop-mark 25 \
     --crop-offset 8
+
+
+mkdir build && cd build 
+cmake ...
+make. 
+
+Using cmake:
+Create a build directory: mkdir build && cd build.
+Generate files: cmake ...
+Build: make. 
+
+# 3. Clean and Build
+cd /workspaces/imgengine/imgengine
+rm -rf build && mkdir build && cd build
+cmake ..
+make -j$(nproc)
+
+
+
+/workspaces/imgengine/imgengine/TURBOJPEG_INCLUDE_DIR
+   used as include directory in directory /workspaces/imgengine/imgengine
+TURBOJPEG_LIB
+    linked by target "imgengine" in directory /workspaces/imgengine/imgengine
+
+sudo apt-get update && sudo apt-get install -y libturbojpeg0-dev libnuma-dev
