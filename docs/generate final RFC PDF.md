@@ -140,6 +140,14 @@
     ASAN / UBSAN in CI
     sandboxed decoder layer
 
+    Security
+        bounds_check.c/h
+        fezz_hooks.c/h
+        input_validator.c/h
+        poision.c/h
+        sandbox.c/h
+        more ....
+
 ## 12. ? Failure Handling
 
     Scenario Strategy
@@ -165,6 +173,13 @@
     async flush
     Tracing
     OpenTelemetry hooks
+
+    ├── observability/              # METRICS & TRACING
+    │   ├── metrics.c/h             # Prometheus/StatsD counters
+    │   └── profiler.c/h            # RDTSC-based latency tracking
+            logger.c/h
+            tracing.c/h
+            more ....
 
 ## 15. ?? Deployment Model
 
@@ -607,7 +622,7 @@
 
 ### FOR ME ?? Why this matters for YOU
 
-	You’re already working on:
+ You’re already working on:
      system design
      microservices
      performance (VPP-style thinking)
@@ -618,4 +633,3 @@
      distributed systems
      performance engineering
      system architecture (like kernel-grade design you asked earlier)
- 

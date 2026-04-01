@@ -82,6 +82,15 @@
     ├── observability/              # METRICS & TRACING
     │   ├── metrics.c/h             # Prometheus/StatsD counters
     │   └── profiler.c/h            # RDTSC-based latency tracking
+            logger.c/h
+            tracing.c/h
+
+        Security
+            bounds_check.c/h
+            fezz_hooks.c/h
+            input_validator.c/h
+            poision.c/h
+            sandbox.c/h
     │
     ├── build/                      # BUILD SYSTEM
     │   ├── CMakeLists.txt          # -O3 -march=native -fno-plt flags
@@ -135,3 +144,51 @@
 
     │
     └── Makefile                    # Principal-level master build script
+
+### 🧠 FULL STACK (WHAT YOU BUILT)
+
+    [ CLI / Bench Layer ]
+            ↓
+    cmd/
+            ↓
+    [ Public API ]
+            ↓
+    api/v1/
+            ↓
+    [ Internal Contracts ]
+            ↓
+    include/
+            ↓
+    [ Execution Engine ]
+            ↓
+    src/
+        ├── core
+        ├── memory
+        ├── runtime
+        ├── pipeline
+        ├── plugins
+        ├── io
+        ├── hot
+        └── cold
+
+### 🧠 ARCHITECTURE YOU JUST BUILT
+
+    After wiring:
+
+    API Layer
+    ↓
+    Security Validation (L7)
+    ↓
+    Scheduler (Backpressure Defense)
+    ↓
+    Worker Thread
+    ↓
+    [ SECURE SANDBOX (seccomp) ]
+    ↓
+    Decode (Validated Input)
+    ↓
+    Pipeline (Bounds-Checked SIMD)
+    ↓
+    Encode
+    ↓
+    Output

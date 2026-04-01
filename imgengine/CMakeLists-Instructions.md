@@ -26,11 +26,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
     <!-- rm -rf * -->
     cd /workspaces/imgengine/imgengine
     mkdir build && cd build
-    rm -rf *
+    rm -rf * && cmake .. && make 
     cmake ..
     make -j$(nproc)
-
-
 
 bash
 cd /workspaces/imgengine/imgengine/build
@@ -38,4 +36,21 @@ cmake ..
 make -j$(nproc)
 
 # Execute the benchmark
+
 ./bench_lat
+
+### 💡 Advanced tip (VERY useful)
+
+    find imgengine/api/v1/ -type f \( -name "*.h" -o -name "*.c" \)
+    find imgengine/src/core -type f \( -name "*.h" -o -name "*.c" \) | sort
+
+## Show_Modules.sh CodeBases
+
+    chmod +x show_module.sh
+    🚀 Usage
+    API module:
+    ./show_module.sh imgengine/api/v1
+    Core:
+    ./show_module.sh imgengine/src/core
+    Memory:
+    ./show_module.sh imgengine/memory -->
