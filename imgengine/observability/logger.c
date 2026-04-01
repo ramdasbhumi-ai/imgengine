@@ -3,6 +3,7 @@
 #include "runtime/queue_spsc.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <pthread.h>
 
 static img_queue_t *g_log_queue = NULL;
