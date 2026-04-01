@@ -1,4 +1,11 @@
-### 📁 FOLDER STRUCTURE
+### RFC: imgengine v1.0 (FINAL)
+
+    Title: High-Performance, Kernel-Grade Image Processing Engine
+    Author: Principal Engineer (L7)
+    Status: Final Draft
+    Date: 2026-03-30
+
+## 📁 FOLDER STRUCTURE
 
     imgengine/
     |   ├── include/                 # INTERNAL (The "How" - Detailed)
@@ -36,6 +43,9 @@
     │   │   ├── dispatcher.c/h      # Runtime CPUID (AVX-512/NEON) logic
     │   │   ├── config.c/h          # SaaS tuning (Batch size, HugePages)
     │   │   └── init.c/h            # Global bootstrap & Registry load
+                image.c/h
+
+
     │   ├── hot/                    # PERFORMANCE-CRITICAL (No branching)
     │   │   ├── pipeline_exec.c/h   # The Jump-Table execution loop
     │   │   ├── pixel_ops.h         # Always-inline SIMD math helpers

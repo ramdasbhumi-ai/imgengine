@@ -1,5 +1,5 @@
 /* src/hot/batch_engine.c */
-#include "core/batch.h"
+#include "hot/batch.h"
 
 void img_batch_process_hot(img_ctx_t *ctx, img_batch_t *batch, img_pipeline_t *pipe)
 {

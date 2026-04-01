@@ -1,7 +1,7 @@
 /* src/core/context.c */
-#include "core/context.h"
+#include "core/context.h" // Removed "src/" prefix
 #include "memory/slab.h"
-#include "core/dispatcher.h"
+#include "core/dispatcher.h" // Removed "src/" prefix
 #include <stdlib.h>
 
 img_ctx_t *img_ctx_init(uint32_t worker_id, size_t slab_size, size_t num_slabs)

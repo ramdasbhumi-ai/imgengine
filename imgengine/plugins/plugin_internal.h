@@ -22,4 +22,8 @@ typedef struct
 // Global Registration Hook
 void img_plugins_init_all(void);
 
+// Prototypes for static registration
+void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params);
+void plugin_crop_single(img_ctx_t *ctx, img_buffer_t *buf, void *params);
+
 #endif

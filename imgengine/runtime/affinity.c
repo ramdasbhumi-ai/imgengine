@@ -5,7 +5,7 @@
 
 void img_affinity_set(uint32_t cpu_id)
 {
-    cpu_set_set_t cpuset;
+    cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(cpu_id, &cpuset);
 

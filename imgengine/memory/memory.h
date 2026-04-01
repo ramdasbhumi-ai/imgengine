@@ -29,3 +29,4 @@ img_arena_t *img_arena_create(size_t size);
 void *img_arena_alloc(img_arena_t *arena, size_t size);
 
 #endif
+

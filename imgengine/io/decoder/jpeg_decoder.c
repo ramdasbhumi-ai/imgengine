@@ -1,6 +1,13 @@
 /* io/decoder/jpeg_decoder.c */
+// #include <turbojpeg.h>
+// #include "core/context.h"
+
+/* io/decoder/jpeg_decoder.c */
 #include <turbojpeg.h>
-#include "core/context.h"
+#include "api/v1/img_error.h" // For img_result_t
+#include "io/io_vfs.h"        // For img_stream_t
+#include "core/image.h"       // For img_buffer_t
+#include "core/context.h"     // For img_ctx_t
 
 img_result_t img_decode_jpeg_hardened(img_ctx_t *ctx, img_stream_t *stream, img_buffer_t *out)
 {
@@ -18,8 +25,8 @@ img_result_t img_decode_jpeg_hardened(img_ctx_t *ctx, img_stream_t *stream, img_
     }
 
     // 3. ZERO-COPY DECODE: Directly into Slab
-    uint8_t *slab = img_slab_alloc_block(ctx->pool);
-    *out = img_buffer_wrap(slab, w, h, 3);
+    uint8_t *slab = img_slab_alloc(ctx->pool);
+    *out = img_buffer_create(slab, w, h, 3);
 
     tjDecompress2(handle, stream->data, stream->size, out->data, w, out->stride, h, TJPF_RGB, TJFLAG_FASTDCT);
 

@@ -1,49 +1,50 @@
 cmake_minimum_required(VERSION 3.10)
 project(imgengine C)
 
+# --- 1. GLOBAL STANDARDS ---
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# --- 1. HARDENING & OPTIMIZATION FLAGS ---
-# -march=native: Uses current CPU's SIMD (AVX2/AVX512)
-# -fno-plt: Bypasses PLT for faster calls
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native -Wall -Wextra -Werror")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fno-plt -fPIC")
+# --- 2. PRINCIPAL-LEVEL COMPILER FLAGS ---
+# We use Clang-specific hardening and SIMD optimizations
+set(IMG_C_FLAGS "-O3 -march=native -fno-plt")
+# set(IMG_C_FLAGS "-O3 -march=native -fno-plt -fvisibility=hidden -Wall -Wextra -Werror")
 
-# --- 2. ARCHITECTURE DETECTION (CRITICAL) ---
+# Enable Sanitizers for Security (ASAN = Address, UBSAN = Undefined Behavior)
+set(IMG_SAN_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${IMG_C_FLAGS} ${IMG_SAN_FLAGS}")
+
+# --- 3. ARCHITECTURE DETECTION ---
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
     set(ARCH_DIR "arch/x86_64")
     add_definitions(-DARCH_X86_64)
-    message(STATUS "Build target: x86_64 (AVX-512/AVX2)")
+    message(STATUS "[CORE] Target Architecture: x86_64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
     set(ARCH_DIR "arch/aarch64")
     add_definitions(-DARCH_AARCH64)
-    message(STATUS "Build target: aarch64 (NEON)")
+    message(STATUS "[CORE] Target Architecture: aarch64")
 else()
     set(ARCH_DIR "arch/scalar")
-    message(STATUS "Build target: Generic Scalar Fallback")
+    message(STATUS "[CORE] Target Architecture: Generic Scalar")
 endif()
 
-# --- 3. SEARCH PATHS ---
+# --- 4. INCLUDE PATHS ---
 include_directories(
     .
-    api/v1 
-    src 
-    include 
-    memory 
-    runtime 
-    pipeline 
-    plugins 
+    api/v1
+    src
+    include
+    memory
+    runtime
+    pipeline
+    plugins
     io
+    security
 )
 
-# --- 4. EXTERNAL DEPENDENCIES ---
+# --- 5. EXTERNAL DEPENDENCIES ---
 find_package(Threads REQUIRED)
-# Reliable search for TurboJPEG on Ubuntu/Codespaces
-find_path(TURBOJPEG_INCLUDE_DIR NAMES turbojpeg.h)
-find_library(TURBOJPEG_LIB NAMES turbojpeg)
-
-
-# Replace the old find_library block with this:
 find_path(TURBOJPEG_INCLUDE_DIR NAMES turbojpeg.h)
 find_library(TURBOJPEG_LIB NAMES turbojpeg)
 
@@ -51,13 +52,7 @@ find_library(TURBOJPEG_LIB NAMES turbojpeg)
 #     message(FATAL_ERROR "libturbojpeg not found. Run: sudo apt-get install libturbojpeg0-dev")
 # endif()
 
-include_directories(${TURBOJPEG_INCLUDE_DIR})
-
-# if(NOT TURBOJPEG_LIB)
-#     message(FATAL_ERROR "libturbojpeg not found. Run: sudo apt-get install libturbojpeg0-dev")
-# endif()
-
-# --- 5. SOURCE COLLECTION (Filtered by Arch) ---
+# --- 6. SOURCE COLLECTION (Filtered by Silicon) ---
 file(GLOB_RECURSE ENGINE_SOURCES 
     "src/*.c" 
     "pipeline/*.c" 
@@ -65,22 +60,25 @@ file(GLOB_RECURSE ENGINE_SOURCES
     "io/*.c" 
     "runtime/*.c" 
     "memory/*.c"
-    "${ARCH_DIR}/*.c" # Only pulls the compatible silicon logic
+    "security/*.c"
+    "observability/*.c" # ADD THIS
+    "${ARCH_DIR}/*.c"
 )
 
-# --- 6. TARGETS ---
+# --- 7. TARGETS ---
 
-# A. The Core Shared Library
+# A. The Shared Library (Kernel-Grade Core)
 add_library(imgengine SHARED ${ENGINE_SOURCES})
 target_include_directories(imgengine PRIVATE ${TURBOJPEG_INCLUDE_DIR})
-target_link_libraries(imgengine PRIVATE Threads::Threads ${TURBOJPEG_LIB} m)
+target_link_libraries(imgengine PRIVATE Threads::Threads ${TURBOJPEG_LIB} m "-fsanitize=address,undefined")
 
 # B. The Production CLI Tool
-add_executable(imgengine_cli cmd/imgengine/main.c cmd/imgengine/args.c)
-target_link_libraries(imgengine_cli PRIVATE imgengine)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmd/imgengine/main.c")
+    add_executable(imgengine_cli cmd/imgengine/main.c cmd/imgengine/args.c)
+    target_link_libraries(imgengine_cli PRIVATE imgengine)
+endif()
 
 # C. The Latency Benchmarker
-# Ensure this file exists: touch cmd/bench/lat_bench.c
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmd/bench/lat_bench.c")
     add_executable(bench_lat cmd/bench/lat_bench.c)
     target_link_libraries(bench_lat PRIVATE imgengine)

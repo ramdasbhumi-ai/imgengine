@@ -1,15 +1,16 @@
 /* runtime/queue_spsc.c */
-#include "runtime/runtime.h"
+#include "runtime/queue_spsc.h" // Add this include
 #include <stdlib.h>
+#include <stdalign.h>
 
-typedef struct img_queue
+struct img_queue
 {
     void **buffer;
     uint32_t capacity;
     uint32_t mask;
-    alignas(64) uint32_t head; // Consumer side
-    alignas(64) uint32_t tail; // Producer side
-} img_queue_t;
+    alignas(64) uint32_t head; // Consumer Side
+    alignas(64) uint32_t tail; // Producer Side
+};
 
 img_queue_t *img_queue_create(uint32_t power_of_two)
 {
