@@ -1,9 +1,10 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+// #include "stb_image.h"
 
 #include "core/image.h"
 #include "core/context.h"
 #include "api/v1/img_error.h"
+#include <string.h>
 
 img_result_t img_decode_stb(
     img_ctx_t *ctx,

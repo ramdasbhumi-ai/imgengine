@@ -1,3 +1,5 @@
+// plugins/plugin_crop.c 
+
 #include "plugins/plugin_internal.h"
 
 typedef struct

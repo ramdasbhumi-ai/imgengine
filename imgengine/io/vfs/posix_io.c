@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "api/v1/img_error.h"
+#include <stdint.h>
 
 img_result_t img_vfs_mmap_file(
     const char *path,

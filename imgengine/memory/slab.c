@@ -65,3 +65,12 @@ void img_slab_free(img_slab_pool_t *pool, void *ptr)
     block->next = pool->free_list;
     pool->free_list = block;
 }
+
+void img_slab_destroy(img_slab_pool_t *pool)
+{
+    if (!pool)
+        return;
+
+    free(pool->memory);
+    free(pool);
+}

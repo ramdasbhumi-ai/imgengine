@@ -22,4 +22,10 @@ uint8_t *img_slab_alloc(img_slab_pool_t *pool);
  */
 void img_slab_free(img_slab_pool_t *pool, void *ptr);
 
+/**
+ * @brief Destroy slab pool and free all memory
+ */
+void img_slab_destroy(img_slab_pool_t *pool);
+
+
 #endif

@@ -1,22 +1,21 @@
+// // plugins/_resize.c
 #include "plugins/plugin_internal.h"
-#include "arch/arch_kernels.h"
+#include "plugins/plugin_resize.h"
 #include "memory/slab.h"
-#include "core/image.h"
-
-typedef struct
-{
-    uint32_t target_w;
-    uint32_t target_h;
-} resize_params_t;
+#include "pipeline/jump_table.h"
 
 void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params)
 {
-    if (!ctx || !buf || !params)
-        return;
-
     resize_params_t *p = (resize_params_t *)params;
 
-    // Allocate new slab (O(1))
+    // 🔥 PRECOMPUTE ONCE (NOT INSIDE SIMD LOOP)
+    p->scale_x = (buf->width << 16) / p->target_w;
+    p->scale_y = (buf->height << 16) / p->target_h;
+
+    // inject src
+    p->src = buf;
+
+    // 1. Allocate output
     uint8_t *out_mem = img_slab_alloc(ctx->pool);
     if (!out_mem)
         return;
@@ -27,33 +26,15 @@ void plugin_resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *params)
         p->target_h,
         buf->channels);
 
-    // Hardware dispatch (branch once)
-    switch (ctx->cpu_caps)
-    {
-    case ARCH_AVX512:
-        img_arch_avx512_resize(buf, &dst);
-        break;
-    case ARCH_AVX2:
-        img_arch_avx2_resize(buf, &dst);
-        break;
-    case ARCH_NEON:
-        img_arch_neon_resize(buf, &dst);
-        break;
-    default:
-        img_arch_scalar_resize(buf, &dst);
-        break;
-    }
+    // 2. Inject source into params
+    p->src = buf;
 
-    // Swap buffers (zero-copy style)
+    // 3. 🔥 DIRECT EXECUTION (NO ADAPTER, NO SWITCH)
+    g_jump_table[OP_RESIZE](ctx, &dst, params);
+
+    // 4. Swap buffers
     img_slab_free(ctx->pool, buf->data);
     *buf = dst;
 }
 
-void plugin_resize_batch(img_ctx_t *ctx, img_batch_t *batch, void *params)
-{
-    if (!ctx || !batch || !params)
-        return;
-
-    // AVX-512 batch kernel (8-way)
-    img_arch_batch_resize(ctx, batch, params);
-}
+// resize_params_t *p = (resize_params_t *)params;

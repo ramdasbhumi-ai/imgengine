@@ -1,6 +1,7 @@
 #include <turbojpeg.h>
 #include "core/image.h"
 #include "api/v1/img_error.h"
+#include <stddef.h>
 
 img_result_t img_encode_jpeg(
     img_buffer_t *buf,

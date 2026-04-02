@@ -1,3 +1,5 @@
+// plugins/plugin_registry.c
+
 #include "plugins/plugin_internal.h"
 #include "pipeline/jump_table.h"
 

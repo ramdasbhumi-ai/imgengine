@@ -3,8 +3,11 @@
 
 void img_debug_dump_ctx(const img_ctx_t *ctx)
 {
-    printf("[DEBUG] Thread: %u Pool: %p Caps: %u\n",
-           ctx->thread_id,
+    if (!ctx)
+        return;
+
+    printf("[DEBUG] Worker: %u Pool: %p Caps: %u\n",
+           ctx->worker_id, // ✅ FIXED
            (void *)ctx->pool,
            ctx->cpu_caps);
 }

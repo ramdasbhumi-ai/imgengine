@@ -30,6 +30,10 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
     cmake ..
     make -j$(nproc)
 
+    rm -rf *
+    cmake ..
+    make -j
+
 bash
 cd /workspaces/imgengine/imgengine/build
 cmake ..

@@ -1,3 +1,5 @@
+// src/core/dispatcher.c
+
 #include "core/dispatcher.h"
 
 cpu_arch_t img_detect_cpu(void)

@@ -1,3 +1,5 @@
+// plugins/plugin_inhernal.h
+
 #ifndef IMGENGINE_PLUGINS_INTERNAL_H
 #define IMGENGINE_PLUGINS_INTERNAL_H
 
