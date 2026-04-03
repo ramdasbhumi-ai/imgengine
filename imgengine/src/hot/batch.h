@@ -2,8 +2,8 @@
 #ifndef IMGENGINE_HOT_BATCH_H
 #define IMGENGINE_HOT_BATCH_H
 
-#include "core/image.h"
-#include "core/context.h"
+#include "api/v1/img_types.h"
+#include "core/context_internal.h"
 
 #define BATCH_SIZE 8
 

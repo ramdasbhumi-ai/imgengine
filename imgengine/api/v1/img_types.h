@@ -1,6 +1,5 @@
 /* api/v1/img_types.h */
 
-/* api/v1/img_types.h */
 #ifndef IMGENGINE_API_TYPES_H
 #define IMGENGINE_API_TYPES_H
 
