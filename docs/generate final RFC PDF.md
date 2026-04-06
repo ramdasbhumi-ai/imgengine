@@ -806,6 +806,15 @@
                     │        HOT PATH              │
                     │   img_buffer (ZERO COPY)     │
 
+### HOW TO ORGANIZE (FINAL)
+
+    security/
+    ├── input_validator.*   → API entry
+    ├── bounds_check.h      → decoder only
+    ├── poison.h            → memory system
+    ├── sandbox.*           → init
+    ├── fuzz_hooks.*        → tests only
+
 ### 🚀 NEXT L8+ (REAL DISTRIBUTED SYSTEM)
 
     If you want to go even further:

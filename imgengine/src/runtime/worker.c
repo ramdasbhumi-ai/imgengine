@@ -3,6 +3,8 @@
 #include "runtime/worker.h"
 #include "runtime/task.h"
 #include <unistd.h>
+#include "runtime/scheduler.h"
+#include "hot/pipeline_exec.h"
 
 static void *worker_loop(void *arg)
 {
@@ -11,16 +13,27 @@ static void *worker_loop(void *arg)
     while (w->running)
     {
         img_task_t *task =
-            (img_task_t *)img_mpmc_pop(w->queue);
+            (img_task_t *)img_queue_pop(w->queue);
+
+        // 🔥 STEAL if empty
+        if (!task)
+        {
+            task = img_scheduler_steal(
+                w->scheduler,
+                w->id);
+        }
 
         if (!task)
         {
-            __builtin_ia32_pause(); // CPU hint
+            __builtin_ia32_pause();
             continue;
         }
 
-        // 🔥 Execute pipeline (your existing engine)
-        // pipeline_execute(w->ctx, task);
+        // 🔥 EXECUTE (HOT PATH)
+        img_pipeline_execute_hot(
+            w->ctx,
+            task->pipeline,
+            task->buffer);
 
         task->status = 0;
     }
@@ -30,9 +43,12 @@ static void *worker_loop(void *arg)
 
 int img_worker_init(img_worker_t *w, uint32_t id)
 {
-    img_pin_thread_to_core(id);
     w->id = id;
     w->running = 1;
+
+    w->queue = img_queue_create(10); // 1024
+
+    img_pin_thread_to_core(id);
 
     pthread_create(&w->thread, NULL, worker_loop, w);
     return 0;

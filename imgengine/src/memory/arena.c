@@ -1,11 +1,17 @@
 // /* memory/arena.c */
 
+#include "security/poison.h"
 #include "memory/arena.h"
 #include <stdlib.h>
 
 static inline size_t align64(size_t x)
 {
     return (x + 63) & ~63;
+}
+
+void free_block(void *ptr, size_t size)
+{
+    IMG_POISON_MEMORY(ptr, size);
 }
 
 img_arena_t *img_arena_create(size_t size)

@@ -16,10 +16,13 @@
 typedef struct img_slab_pool img_slab_pool_t;
 typedef struct img_arena img_arena_t;
 typedef struct img_ctx img_ctx_t;
+typedef struct img_scheduler img_scheduler_t;
 
 /*
  * 🔥 Worker structure (CACHE FRIENDLY)
  */
+
+#include "runtime/queue_mpmc.h"
 
 typedef struct img_worker_s
 {
@@ -27,7 +30,7 @@ typedef struct img_worker_s
 
     pthread_t thread;
 
-    // 🔥 GLOBAL MPMC QUEUE (shared)
+    // 🔥 USE MPMC (NOT SPSC)
     img_mpmc_queue_t *queue;
 
     img_slab_pool_t *slab;
@@ -35,30 +38,11 @@ typedef struct img_worker_s
 
     img_ctx_t *ctx;
 
+    img_scheduler_t *scheduler; // 🔥 ADD THIS
+
     volatile int running;
 
 } img_worker_t;
-
-// typedef struct img_worker_s
-// {
-//     uint32_t id;
-
-//     pthread_t thread;
-
-//     // 🔥 LOCK-FREE QUEUE
-//     img_queue_t *queue;
-
-//     // 🔥 MEMORY LOCALITY
-//     img_slab_pool_t *slab;
-//     img_arena_t *arena;
-
-//     // 🔥 EXECUTION CONTEXT
-//     img_ctx_t *ctx;
-
-//     // 🔥 CONTROL
-//     volatile int running;
-
-// } img_worker_t;
 
 /*
  * Lifecycle

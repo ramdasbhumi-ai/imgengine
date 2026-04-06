@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "security/poison.h"
+
+void free_block(void *ptr, size_t size)
+{
+    IMG_POISON_MEMORY(ptr, size);
+}
+
 static inline size_t align64(size_t x)
 {
     return (x + 63) & ~63;

@@ -2,29 +2,48 @@
 // src/cold/debug.c
 
 #include "cold/debug.h"
-#include <stdio.h>
+#include "core/context_internal.h"
 
-// These must match your cpu_caps.h
-#define CPU_CAP_AVX2 (1 << 0)
-#define CPU_CAP_AVX512 (1 << 1)
-#define CPU_CAP_NEON (1 << 2)
+#include <stdio.h>
+#include <stdatomic.h>
+
+// 🔥 global debug level (cold path only)
+static _Atomic int g_debug_level = IMG_DEBUG_NONE;
+
+void img_debug_set_level(img_debug_level_t lvl)
+{
+    atomic_store(&g_debug_level, lvl);
+}
+
+#define DEBUG_ENABLED(lvl) (atomic_load(&g_debug_level) >= (lvl))
 
 void img_debug_dump_ctx(const img_ctx_t *ctx)
 {
-    if (!ctx)
+    if (!ctx || !DEBUG_ENABLED(IMG_DEBUG_BASIC))
         return;
 
-    printf("[DEBUG] Thread: %u Pool: %p Caps: 0x%x\n",
+    printf("[CTX] thread=%u slab=%p caps=0x%x\n",
            ctx->thread_id,
            (void *)ctx->local_pool,
            (unsigned int)ctx->caps);
+}
 
-#ifdef ARCH_X86_64
-    printf("[DEBUG] AVX2: %d AVX512: %d\n",
-           (ctx->caps & CPU_CAP_AVX2) != 0,
-           (ctx->caps & CPU_CAP_AVX512) != 0);
-#elif defined(ARCH_AARCH64)
-    printf("[DEBUG] NEON: %d\n",
-           (ctx->caps & CPU_CAP_NEON) != 0);
+void img_debug_dump_slab_usage(const img_ctx_t *ctx)
+{
+    if (!ctx || !DEBUG_ENABLED(IMG_DEBUG_VERBOSE))
+        return;
+
+    printf("[SLAB] pool=%p\n", (void *)ctx->local_pool);
+}
+
+void img_debug_print_cpu_info(void)
+{
+    if (!DEBUG_ENABLED(IMG_DEBUG_BASIC))
+        return;
+
+#if defined(__x86_64__)
+    printf("[CPU] x86_64 detected\n");
+#elif defined(__aarch64__)
+    printf("[CPU] ARM64 detected\n");
 #endif
 }

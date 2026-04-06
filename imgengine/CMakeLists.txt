@@ -20,7 +20,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # ------------------------------------------------------------
 
 # Core performance flags (Google/Amazon-grade)
-set(IMG_C_FLAGS "-O3 -march=native -fno-plt -fstrict-aliasing")
+set(IMG_C_FLAGS "-O3 -march=native -flto  -fno-plt -fstrict-aliasing -luring -lpthread")
 
 # Hardening flags (optional but recommended for SaaS)
 set(IMG_HARDEN_FLAGS "-fstack-protector-strong -D_FORTIFY_SOURCE=2")

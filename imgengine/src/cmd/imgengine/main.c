@@ -1,114 +1,118 @@
 // /* cmd/imgengine/main.c */
 
-#include <sys/mman.h>
+#define _GNU_SOURCE
+
+#include <liburing.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
+#include "cmd/imgengine/args.h"
+#include "cmd/imgengine/io_uring_engine.h"
 #include "api/v1/img_api.h"
-#include "core/buffer.h"
 
-int main(int argc, char **argv)
+typedef struct
 {
-    int fd = open(argv[1], O_RDONLY);
-    if (fd < 0)
-        return 1;
+    int fd;
+    uint8_t *buf;
+    size_t size;
 
-    size_t size = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
+} img_io_task_t;
 
-    // 🔥 ZERO COPY FILE LOAD
-    uint8_t *input = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+static int submit_read(img_io_uring_t *u, img_io_task_t *task)
+{
+    struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
+    if (!sqe)
+        return -1;
 
-    if (input == MAP_FAILED)
-        return 1;
-
-    img_engine_t *engine = img_api_init(4);
-
-    uint8_t *output = NULL;
-    size_t out_size = 0;
-
-    img_api_process_fast(
-        engine,
-        input,
-        size,
-        &output,
-        &out_size);
-
-    int out_fd = open(argv[2], O_WRONLY | O_CREAT, 0644);
-    write(out_fd, output, out_size);
-
-    close(out_fd);
-    munmap(input, size);
-
-    img_api_shutdown(engine);
+    io_uring_prep_read(sqe, task->fd, task->buf, task->size, 0);
+    io_uring_sqe_set_data(sqe, task);
 
     return 0;
 }
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <stdint.h>
+static int submit_write(img_io_uring_t *u, int fd, uint8_t *buf, size_t size)
+{
+    struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
+    if (!sqe)
+        return -1;
 
-// #include "api/v1/img_api.h"
+    io_uring_prep_write(sqe, fd, buf, size, 0);
 
-// int main(int argc, char **argv)
-// {
-//     if (argc < 3)
-//     {
-//         printf("Usage: %s input.jpg output.jpg\n", argv[0]);
-//         return 1;
-//     }
+    return 0;
+}
 
-//     // =====================================
-//     // READ FILE
-//     // =====================================
-//     FILE *f = fopen(argv[1], "rb");
-//     if (!f)
-//         return 1;
+int main(int argc, char **argv)
+{
+    img_cli_options_t opts;
 
-//     fseek(f, 0, SEEK_END);
-//     size_t size = ftell(f);
-//     fseek(f, 0, SEEK_SET);
+    if (img_parse_args(argc, argv, &opts) != 0)
+    {
+        img_print_usage(argv[0]);
+        return 1;
+    }
 
-//     uint8_t *input = malloc(size);
-//     fread(input, 1, size, f);
-//     fclose(f);
+    // ================= ENGINE =================
+    img_engine_t *engine = img_api_init(opts.threads);
 
-//     // =====================================
-//     // ENGINE
-//     // =====================================
-//     img_engine_t *engine = img_api_init();
+    // ================= IO_URING =================
+    img_io_uring_t u;
+    img_io_uring_init(&u, IMG_IO_URING_DEPTH);
 
-//     uint8_t *output = NULL;
-//     size_t out_size = 0;
+    // ================= FILE =================
+    int fd = open(opts.input_path, O_RDONLY);
+    if (fd < 0)
+        return 1;
 
-//     if (img_api_process_fast(
-//             engine,
-//             input,
-//             size,
-//             &output,
-//             &out_size) != 0)
-//     {
-//         printf("Processing failed\n");
-//         return 1;
-//     }
+    size_t size = lseek(fd, 0, SEEK_END);
+    uint8_t *buffer = aligned_alloc(4096, size);
 
-//     // =====================================
-//     // WRITE FILE
-//     // =====================================
-//     FILE *out = fopen(argv[2], "wb");
-//     fwrite(output, 1, out_size, out);
-//     fclose(out);
+    img_io_task_t task = {
+        .fd = fd,
+        .buf = buffer,
+        .size = size};
 
-//     // =====================================
-//     // CLEANUP
-//     // =====================================
-//     free(input);
-//     free(output);
+    // ================= SUBMIT READ =================
+    submit_read(&u, &task);
+    io_uring_submit(&u.ring);
 
-//     img_api_shutdown(engine);
+    // ================= WAIT =================
+    struct io_uring_cqe *cqe;
+    io_uring_wait_cqe(&u.ring, &cqe);
 
-//     printf("Done.\n");
-//     return 0;
-// }
+    if (cqe->res < 0)
+    {
+        printf("read failed\n");
+        return 1;
+    }
+
+    io_uring_cqe_seen(&u.ring, cqe);
+
+    // ================= PROCESS =================
+    uint8_t *out = NULL;
+    size_t out_size = 0;
+
+    img_api_process_fast(engine, buffer, size, &out, &out_size);
+
+    // ================= WRITE =================
+    int out_fd = open(opts.output_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    submit_write(&u, out_fd, out, out_size);
+    io_uring_submit(&u.ring);
+
+    io_uring_wait_cqe(&u.ring, &cqe);
+    io_uring_cqe_seen(&u.ring, cqe);
+
+    // ================= CLEANUP =================
+    close(fd);
+    close(out_fd);
+
+    free(buffer);
+
+    img_io_uring_destroy(&u);
+    img_api_shutdown(engine);
+
+    return 0;
+}

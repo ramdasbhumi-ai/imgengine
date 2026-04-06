@@ -4,7 +4,7 @@
 #include "core/buffer.h"
 #include "pipeline/pipeline_types.h"
 #include "plugins/plugin_resize.h"
-#include "plugins/plugin_internal.h"
+// #include "plugins/plugin_internal.h"
 #include <string.h>
 
 void img_arch_resize_h_scalar(img_ctx_t *ctx, img_buffer_t *dst, void *params)

@@ -1,23 +1,33 @@
-/* cmd/imgengine/args.c */
-#include "cmd/imgengine/args.h"
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
+/* src/cmd/imgengine/args.c */
 
-static struct option long_options[] = {
+#include "cmd/imgengine/args.h"
+
+#include <getopt.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+static struct option long_opts[] = {
     {"input", required_argument, 0, 'i'},
     {"output", required_argument, 0, 'o'},
     {"width", required_argument, 0, 'w'},
     {"height", required_argument, 0, 'h'},
     {"threads", required_argument, 0, 't'},
+    {"bench", no_argument, 0, 'b'},
     {"verbose", no_argument, 0, 'v'},
     {"help", no_argument, 0, '?'},
     {0, 0, 0, 0}};
 
 int img_parse_args(int argc, char **argv, img_cli_options_t *opts)
 {
-    int opt, option_index = 0;
-    while ((opt = getopt_long(argc, argv, "i:o:w:h:t:v?", long_options, &option_index)) != -1)
+    if (!opts)
+        return -1;
+
+    memset(opts, 0, sizeof(*opts));
+
+    int opt, idx;
+
+    while ((opt = getopt_long(argc, argv, "i:o:w:h:t:bv?", long_opts, &idx)) != -1)
     {
         switch (opt)
         {
@@ -36,17 +46,35 @@ int img_parse_args(int argc, char **argv, img_cli_options_t *opts)
         case 't':
             opts->threads = atoi(optarg);
             break;
+        case 'b':
+            opts->bench_mode = true;
+            break;
         case 'v':
             opts->verbose = true;
             break;
+
         default:
             return -1;
         }
     }
-    return (opts->input_path && opts->output_path) ? 0 : -1;
+
+    if (!opts->input_path || !opts->output_path)
+        return -1;
+
+    if (opts->threads == 0)
+        opts->threads = 1;
+
+    return 0;
 }
 
 void img_print_usage(const char *bin)
 {
-    printf("Usage: %s -i <in.jpg> -o <out.jpg> -w <width> -h <height> [options]\n", bin);
+    printf("Usage:\n");
+    printf("  %s -i input.jpg -o output.jpg [options]\n\n", bin);
+    printf("Options:\n");
+    printf("  -w --width <n>\n");
+    printf("  -h --height <n>\n");
+    printf("  -t --threads <n>\n");
+    printf("  -b --bench\n");
+    printf("  -v --verbose\n");
 }
