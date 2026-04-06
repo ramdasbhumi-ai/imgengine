@@ -4,7 +4,7 @@
 #define IMGENGINE_ARCH_INTERFACE_H
 
 #include "core/context_internal.h"
-#include "api/v1/img_types.h"
+#include "core/buffer.h"
 
 // 🔥 UNIFIED KERNEL SIGNATURE
 typedef void (*img_kernel_fn)(img_ctx_t *ctx, img_buffer_t *buf, void *params);

@@ -1,6 +1,8 @@
 // src/cold/validation.c
 
 #include "cold/validation.h"
+#include "pipeline/pipeline_types.h"
+#include "pipeline/pipeline_compiled.h"
 
 // ================= HEADER VALIDATION =================
 

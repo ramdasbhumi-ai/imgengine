@@ -1,6 +1,8 @@
 /* src/core/img_pipeline.c */
 
 #include "api/v1/img_pipeline.h"
+#include "pipeline/pipeline_types.h"
+#include "pipeline/pipeline_compiled.h"
 
 void img_pipeline_init(img_pipeline_desc_t *pipe)
 {

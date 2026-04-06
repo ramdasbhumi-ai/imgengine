@@ -6,15 +6,23 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// 🔥 OPAQUE TYPE (L8 DESIGN)
+// 🔥 OPAQUE
 typedef struct img_slab_pool img_slab_pool_t;
 
-// Lifecycle
+// ================= LIFECYCLE =================
+
 img_slab_pool_t *img_slab_create(size_t total_size, size_t block_size);
 void img_slab_destroy(img_slab_pool_t *pool);
 
-// Allocation (HOT PATH SAFE)
-uint8_t *img_slab_alloc(img_slab_pool_t *pool);
+// ================= HOT PATH =================
+
+// 🔥 returns NULL if no block
+void *img_slab_alloc(img_slab_pool_t *pool);
+
+// 🔥 MUST be returned to same pool
 void img_slab_free(img_slab_pool_t *pool, void *ptr);
+
+// 🔥 NEW: expose block size (critical safety)
+size_t img_slab_block_size(img_slab_pool_t *pool);
 
 #endif

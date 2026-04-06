@@ -2,6 +2,7 @@
 
 #include "hot/batch_exec.h"
 #include "pipeline/jump_table.h"
+#include "pipeline/pipeline_types.h"
 
 void img_batch_execute(
     img_ctx_t *ctx,

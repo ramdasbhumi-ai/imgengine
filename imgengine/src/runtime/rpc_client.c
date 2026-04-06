@@ -53,29 +53,3 @@ int img_rpc_send(uint32_t op_code, img_buffer_t *buf, void *params)
     close(sock);
     return 0;
 }
-
-// #include "runtime/rpc_client.h"
-// #include "runtime/rpc_protocol.h"
-// #include <string.h>
-// #include <stdio.h>
-
-// // 🔥 fake network layer (replace with gRPC / QUIC later)
-// int img_rpc_send(
-//     uint32_t op_code,
-//     img_buffer_t *buf,
-//     void *params)
-// {
-//     img_rpc_request_t req;
-
-//     req.op_code = op_code;
-//     req.buffer.width = buf->width;
-//     req.buffer.height = buf->height;
-//     req.buffer.channels = buf->channels;
-//     req.buffer.stride = buf->stride;
-//     req.buffer.data_size = buf->stride * buf->height;
-
-//     printf("[RPC] Sending op %u to remote node\n", op_code);
-
-//     // 🔥 simulate success
-//     return 0;
-// }

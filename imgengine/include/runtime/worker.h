@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include "runtime/queue_spsc.h"
+#include "runtime/queue_mpmc.h"
 #include "runtime/task.h"
 
 /*
@@ -19,26 +20,45 @@ typedef struct img_ctx img_ctx_t;
 /*
  * 🔥 Worker structure (CACHE FRIENDLY)
  */
+
 typedef struct img_worker_s
 {
     uint32_t id;
 
     pthread_t thread;
 
-    // 🔥 LOCK-FREE QUEUE
-    img_queue_t *queue;
+    // 🔥 GLOBAL MPMC QUEUE (shared)
+    img_mpmc_queue_t *queue;
 
-    // 🔥 MEMORY LOCALITY
     img_slab_pool_t *slab;
     img_arena_t *arena;
 
-    // 🔥 EXECUTION CONTEXT
     img_ctx_t *ctx;
 
-    // 🔥 CONTROL
     volatile int running;
 
 } img_worker_t;
+
+// typedef struct img_worker_s
+// {
+//     uint32_t id;
+
+//     pthread_t thread;
+
+//     // 🔥 LOCK-FREE QUEUE
+//     img_queue_t *queue;
+
+//     // 🔥 MEMORY LOCALITY
+//     img_slab_pool_t *slab;
+//     img_arena_t *arena;
+
+//     // 🔥 EXECUTION CONTEXT
+//     img_ctx_t *ctx;
+
+//     // 🔥 CONTROL
+//     volatile int running;
+
+// } img_worker_t;
 
 /*
  * Lifecycle

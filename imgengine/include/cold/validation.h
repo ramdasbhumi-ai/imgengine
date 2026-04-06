@@ -8,8 +8,9 @@
 #include <stdint.h>
 
 #include "api/v1/img_error.h"
-#include "api/v1/img_types.h"
-#include "pipeline/pipeline.h"
+
+/* Forward Declarations (Opaque Handles) */
+typedef struct img_pipeline_desc img_pipeline_desc_t;
 
 // ================= LIMITS =================
 

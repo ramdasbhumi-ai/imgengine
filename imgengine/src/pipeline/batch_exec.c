@@ -1,6 +1,7 @@
 // src/pipeline/batch_exec.c
 
 #include "pipeline/batch_exec.h"
+#include <stddef.h>
 
 extern img_fused_kernel_fn img_get_fused_kernel();
 

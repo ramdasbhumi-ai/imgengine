@@ -2,7 +2,7 @@
 
 #include "pipeline/pipeline_compiled.h"
 #include "pipeline/jump_table.h"
-#include "api/v1/img_types.h"
+#include "pipeline/pipeline_types.h"
 
 int img_pipeline_compile(
     const img_pipeline_desc_t *in,

@@ -25,7 +25,8 @@
 #include "hot/pipeline_exec.h"
 #include "pipeline/jump_table.h"
 #include "pipeline/pipeline.h"
-// #include "pipeline/pipeline_compiled.h"
+#include "pipeline/pipeline_types.h"
+#include <stddef.h>
 
 void img_pipeline_execute_hot(
     img_ctx_t *ctx,

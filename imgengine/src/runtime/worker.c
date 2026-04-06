@@ -1,37 +1,28 @@
 /* src/runtime/worker.c */
 
 #include "runtime/worker.h"
-#include "runtime/affinity.h"
+#include "runtime/task.h"
+#include <unistd.h>
 
-#include "pipeline/engine.h"
-#include "pipeline/batch_exec.h"
-#include "observability/metrics.h"
-#include "observability/profiler.h"
-
-#include "memory/slab.h"
-#include "memory/arena.h"
-#include "core/context_internal.h"
-
-#include <stdlib.h>
-
-void *worker_loop(void *arg)
+static void *worker_loop(void *arg)
 {
     img_worker_t *w = (img_worker_t *)arg;
 
-    while (__atomic_load_n(&w->running, __ATOMIC_RELAXED))
+    while (w->running)
     {
-        void *item = img_queue_pop(w->queue);
+        img_task_t *task =
+            (img_task_t *)img_mpmc_pop(w->queue);
 
-        if (!item)
+        if (!task)
+        {
+            __builtin_ia32_pause(); // CPU hint
             continue;
+        }
 
-        // 🔥 BATCH EXECUTION
-        img_batch_t *batch = (img_batch_t *)item;
+        // 🔥 Execute pipeline (your existing engine)
+        // pipeline_execute(w->ctx, task);
 
-        img_batch_execute(
-            &w->ctx,
-            batch,
-            NULL);
+        task->status = 0;
     }
 
     return NULL;
@@ -39,27 +30,20 @@ void *worker_loop(void *arg)
 
 int img_worker_init(img_worker_t *w, uint32_t id)
 {
-    if (!w)
-        return -1;
-
+    img_pin_thread_to_core(id);
     w->id = id;
     w->running = 1;
 
-    w->slab = img_slab_create(64 * 1024 * 1024, 256 * 1024);
-    w->arena = img_arena_create(1024 * 1024);
-
-    if (!w->slab || !w->arena)
-        return -1;
-
-    w->queue = img_queue_create(10);
-
-    // ✅ INLINE CONTEXT INIT (CORRECT)
-    w->ctx.thread_id = id;
-    w->ctx.local_pool = w->slab;
-    w->ctx.scratch_arena = w->arena;
-    w->ctx.caps = img_cpu_detect_caps();
-
     pthread_create(&w->thread, NULL, worker_loop, w);
-
     return 0;
+}
+
+void img_worker_stop(img_worker_t *w)
+{
+    w->running = 0;
+}
+
+void img_worker_join(img_worker_t *w)
+{
+    pthread_join(w->thread, NULL);
 }

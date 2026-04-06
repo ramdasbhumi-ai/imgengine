@@ -5,7 +5,7 @@
 
 #include "core/context_internal.h"
 #include "pipeline/batch.h"
-#include "api/v1/img_types.h"
+// #include "api/v1/img_types.h"
 
 typedef void (*img_fused_kernel_fn)(
     img_ctx_t *ctx,

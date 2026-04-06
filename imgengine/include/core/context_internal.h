@@ -11,6 +11,7 @@
  */
 typedef struct img_slab_pool img_slab_pool_t;
 typedef struct img_arena img_arena_t;
+// typedef struct cpu_caps cpu_caps_t;
 
 /*
  * ================= ENGINE =================

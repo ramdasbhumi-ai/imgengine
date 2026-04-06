@@ -1,6 +1,7 @@
 // // src/core/context.c
 
 #include "core/context_internal.h"
+#include "arch/cpu_caps.h"
 #include "memory/slab.h"
 #include "memory/arena.h"
 #include <stdlib.h>

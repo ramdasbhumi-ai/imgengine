@@ -4,19 +4,25 @@
 #define IMGENGINE_ZERO_COPY_CONTRACT_H
 
 /*
-🔥 SYSTEM GUARANTEES
+================= L8 MEMORY CONTRACT =================
 
-1. Decoder writes directly into slab memory
-2. Pipeline NEVER copies buffers
-3. Plugins mutate in-place or swap buffers
-4. Encoder reads directly from buffer
-5. Network layer MAY copy (boundary only)
+✔ Decoder → writes directly into slab
+✔ Pipeline → operates in-place
+✔ Batch → references slab buffers only
+✔ Encoder → reads directly
 
-🔥 FORBIDDEN
+================= HARD RULES =================
 
-- memcpy in hot path
-- malloc in pipeline
-- intermediate buffers outside slab
+❌ malloc/free in hot path
+❌ memcpy in pipeline
+❌ unbounded allocations
+❌ hidden ownership
+
+================= REQUIRED =================
+
+✔ slab block size >= max image size
+✔ explicit ownership transfer
+✔ bounds check before every decode
 
 */
 

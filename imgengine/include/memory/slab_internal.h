@@ -15,7 +15,7 @@ struct img_slab_pool
 {
     slab_block_t *free_list;
 
-    void *memory;
+    uint8_t *memory;
     size_t total_size;
 
     size_t block_size;

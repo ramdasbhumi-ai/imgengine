@@ -7,10 +7,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Forward declaration
-typedef struct cell_t cell_t;
+typedef struct
+{
+    _Atomic size_t seq;
+    void *data;
+} cell_t;
 
-// 🔥 CACHE-LINE ALIGNED QUEUE
 typedef struct __attribute__((aligned(64)))
 {
     size_t size;
@@ -19,10 +21,10 @@ typedef struct __attribute__((aligned(64)))
     cell_t *cells;
 
     _Atomic size_t head;
-    char pad1[64]; // prevent false sharing
+    char pad1[64];
 
     _Atomic size_t tail;
-    char pad2[64]; // prevent false sharing
+    char pad2[64];
 
 } img_mpmc_queue_t;
 

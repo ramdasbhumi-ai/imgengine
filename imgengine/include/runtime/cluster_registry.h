@@ -1,3 +1,5 @@
+// runtime/cluster_registry.h
+
 #ifndef IMGENGINE_CLUSTER_REGISTRY_H
 #define IMGENGINE_CLUSTER_REGISTRY_H
 

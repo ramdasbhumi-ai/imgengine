@@ -2,12 +2,10 @@
 
 #include <x86intrin.h>
 #include <stdio.h>
-#include "api/v1/img_types.h"
 #include "api/v1/img_api.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-
 
 int main()
 {

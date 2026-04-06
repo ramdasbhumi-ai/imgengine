@@ -2,8 +2,9 @@
 
 #ifndef IMGENGINE_IMG_BUFFER_UTILS_H
 #define IMGENGINE_IMG_BUFFER_UTILS_H
+#include "core/buffer.h"
 
-#include "api/v1/img_types.h"
+// #include "api/v1/img_types.h"
 
 // 🔥 zero-cost helper
 static inline img_buffer_t img_buffer_create(

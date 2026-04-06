@@ -1,8 +1,6 @@
 // plugins/plugin_crop.c
 
 #include "plugins/plugin_crop.h"
-#include "api/v1/img_types.h"
-// #include "pipeline/pipeline_types.h"
 #include "core/buffer.h"
 
 typedef struct
