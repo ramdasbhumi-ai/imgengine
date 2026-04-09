@@ -4,7 +4,7 @@ import sys
 
 
 class HeaderChecker:
-    def __init__(self, root="../"):
+    def __init__(self, root="."):
         self.root = os.path.abspath(root)
         self.extensions = (".c", ".h")
         self.ignored_dirs = {"build", ".git"}
