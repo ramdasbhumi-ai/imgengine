@@ -2,11 +2,9 @@
 import os
 import sys
 
-ROOT = ".."
+ROOT = "."   # ✅ FIXED
 EXTENSIONS = (".c", ".h")
 IGNORED_DIRS = {"build", ".git", ".github"}
-
-print('Printing Root File ', ROOT)
 
 errors = []
 
@@ -49,6 +47,6 @@ if __name__ == "__main__":
             print(f"{path}")
             print(f"  expected: {exp}\n")
 
-        sys.exit(1)  # 🔥 FAIL CI
+        sys.exit(1)
     else:
         print("✅ All headers correct")
