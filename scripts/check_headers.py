@@ -2,9 +2,11 @@
 import os
 import sys
 
-ROOT = "../"
+ROOT = ".."
 EXTENSIONS = (".c", ".h")
 IGNORED_DIRS = {"build", ".git", ".github"}
+
+print('Printing Root File ', ROOT)
 
 errors = []
 
