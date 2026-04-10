@@ -2,13 +2,12 @@
 
 imgengine/
 │
-├── api/                                  # 🔥 STABLE ABI (DO NOT BREAK)
-│   └── v1/
-│       ├── img_api.h
-│       ├── img_pipeline.h
-│       ├── img_buffer_utils.h
-│       ├── img_plugin_api.h
-│       └── img_error.h
+api/v1/                                 # 🔥 STABLE ABI (DO NOT BREAK)
+    ├── img_types.h        # ONLY pure types (no logic)
+    ├── img_api.h          # lifecycle + submission
+    ├── img_pipeline.h     # pipeline construction
+    ├── img_buffer.h       # opaque buffer API (NO internals)
+    └── img_error.h        # error model
 include/
     ├── core/                                 # 🔥 PURE COMPUTE (NO IO / THREADS)
     │   ├── context/

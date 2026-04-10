@@ -12,4 +12,4 @@
 
 ### Run ./imgengine_cli
 
-    ./imgengine_cli --input ../input.jpg --output final_output.png --cols 6 --rows 2 --gap 15 --width 3.5 --height 3.0 --padding 20 --bleed 10 --crop-mark 25 --crop-offset 8
+    ./imgengine_cli --input ../input.jpg --output final_output.png --cols 6 --rows 1 --gap 10 --width 3.5 --height 3.0 --padding 20 --bleed 1 --crop-mark 2 --crop-offset 2
