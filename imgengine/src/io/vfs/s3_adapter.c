@@ -1,8 +1,5 @@
 // ./src/io/vfs/s3_adapter.c
 
-// ./src/io/vfs/s3_adapter.c
-
-
 #include "io/io_vfs.h"
 
 // Pseudo implementation (to be wired with libcurl / aws-sdk)

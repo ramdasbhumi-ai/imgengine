@@ -1,112 +1,108 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 # ============================================================
 #  imgengine — High-Performance Kernel-Grade Image Engine
-#  Principal Engineer (L10)
+#  Unified build: core library + CLI + bench + plugin
 # ============================================================
 
-project(imgengine C)
-
-# ------------------------------------------------------------
-# 1. GLOBAL STANDARDS
-# ------------------------------------------------------------
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# ------------------------------------------------------------
-# 2. COMPILER FLAGS
-# ------------------------------------------------------------
-set(IMG_C_FLAGS
-    "-O3 -march=native -flto -fno-plt -fstrict-aliasing"
-    # "-Wl,--undefined=__start_img_plugins,--undefined=__stop_img_plugins"
-    # "-Wl,--undefined=__start_img_plugins"
-    # "-Wl,--undefined=__stop_img_plugins"
+project(imgengine
+    VERSION   1.0.0
+    LANGUAGES C
 )
-string(JOIN " " IMG_C_FLAGS ${IMG_C_FLAGS})
 
-set(IMG_HARDEN_FLAGS "-fstack-protector-strong -D_FORTIFY_SOURCE=2")
-set(IMG_SAN_FLAGS    "-fsanitize=address,undefined -fno-omit-frame-pointer")
+# ── Standards ──────────────────────────────────────────────
+set(CMAKE_C_STANDARD            11)
+set(CMAKE_C_STANDARD_REQUIRED   ON)
+set(CMAKE_C_EXTENSIONS          OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS   ON)   # for clangd / analyzer
 
-option(ENABLE_SANITIZER "Enable ASAN/UBSAN" ON)
-
-if(ENABLE_SANITIZER)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${IMG_C_FLAGS} ${IMG_HARDEN_FLAGS} ${IMG_SAN_FLAGS}")
-else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${IMG_C_FLAGS} ${IMG_HARDEN_FLAGS}")
-endif()
-
-# ------------------------------------------------------------
-# 3. ARCHITECTURE DETECTION
-# ------------------------------------------------------------
+# ── Architecture detection ─────────────────────────────────
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
-    set(ARCH_DIR "src/arch/x86_64")
+    set(IMGENGINE_ARCH      "x86_64")
+    set(IMGENGINE_ARCH_DIR  "src/arch/x86_64")
     add_definitions(-DARCH_X86_64)
-    message(STATUS "[CORE] Target Architecture: x86_64")
+    message(STATUS "[ARCH] x86_64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
-    set(ARCH_DIR "src/arch/aarch64")
+    set(IMGENGINE_ARCH      "aarch64")
+    set(IMGENGINE_ARCH_DIR  "src/arch/aarch64")
     add_definitions(-DARCH_AARCH64)
-    message(STATUS "[CORE] Target Architecture: aarch64")
+    message(STATUS "[ARCH] aarch64")
 else()
-    set(ARCH_DIR "src/arch/scalar")
+    set(IMGENGINE_ARCH      "scalar")
+    set(IMGENGINE_ARCH_DIR  "src/arch/scalar")
     add_definitions(-DARCH_SCALAR)
-    message(STATUS "[CORE] Target Architecture: Generic Scalar")
+    message(STATUS "[ARCH] scalar fallback")
 endif()
 
-# ------------------------------------------------------------
-# 4. INCLUDE PATHS
-# ------------------------------------------------------------
-include_directories(
+# ── Feature flags ──────────────────────────────────────────
+option(IMGENGINE_SANITIZE   "Enable ASAN + UBSAN"          ON)
+option(IMGENGINE_LTO        "Enable link-time optimization" ON)
+option(IMGENGINE_SANDBOX    "Enable seccomp sandbox"        OFF)
+option(IMGENGINE_BENCH      "Build latency benchmark"       ON)
+
+# ── Compiler flags ─────────────────────────────────────────
+set(IMGENGINE_COMMON_FLAGS
+    -O3
+    -march=native
+    -fno-plt
+    -fstrict-aliasing
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=2
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wformat=2
+    -Werror=implicit-function-declaration
+    -Werror=incompatible-pointer-types
+)
+
+if(IMGENGINE_LTO)
+    list(APPEND IMGENGINE_COMMON_FLAGS -flto)
+    set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -flto")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
+endif()
+
+if(IMGENGINE_SANITIZE)
+    list(APPEND IMGENGINE_COMMON_FLAGS
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+    )
+endif()
+
+if(IMGENGINE_SANDBOX)
+    add_definitions(-DIMG_SANDBOX_ENABLED)
+endif()
+
+# ── Dependencies ───────────────────────────────────────────
+find_package(Threads REQUIRED)
+
+find_path(TURBOJPEG_INCLUDE NAMES turbojpeg.h)
+find_library(TURBOJPEG_LIB  NAMES turbojpeg)
+if(NOT TURBOJPEG_LIB)
+    message(FATAL_ERROR "[IO] libturbojpeg not found — required")
+endif()
+message(STATUS "[IO] turbojpeg: ${TURBOJPEG_LIB}")
+
+find_library(NUMA_LIB  numa)
+find_library(URING_LIB uring)
+find_library(MATH_LIB  m)
+
+# ── Include paths ──────────────────────────────────────────
+set(IMGENGINE_INCLUDES
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/api/v1
     ${CMAKE_SOURCE_DIR}/third_party
+    ${TURBOJPEG_INCLUDE}
 )
 
-# ------------------------------------------------------------
-# 5. EXTERNAL DEPENDENCIES
-# ------------------------------------------------------------
-find_package(Threads REQUIRED)
+# ── Library source lists (explicit — no GLOB_RECURSE) ──────
 
-find_path(TURBOJPEG_INCLUDE_DIR NAMES turbojpeg.h)
-find_library(TURBOJPEG_LIB NAMES turbojpeg)
-if(TURBOJPEG_LIB)
-    message(STATUS "[IO] turbojpeg found")
-else()
-    message(WARNING "[IO] turbojpeg not found (JPEG disabled)")
-endif()
-
-find_library(NUMA_LIB numa)
-find_library(URING_LIB uring)
-
-# ------------------------------------------------------------
-# 6. LIBRARY SOURCE LIST (EXPLICIT — no GLOB_RECURSE on src/)
-#
-# Rules:
-#   - src/cmd/** EXCLUDED — those are executables, never library
-#   - Each subdirectory listed once, explicitly
-#   - No duplicate files across lists
-# ------------------------------------------------------------
-
-# --- API ---
 set(SOURCES_API
     src/api/api.c
 )
 
-# --- ARCH --- (replace your current SOURCES_ARCH block)
-set(SOURCES_ARCH
-    src/arch/x86_64/avx2/color_avx2.c
-    src/arch/x86_64/avx2/fused_resize_color_norm_avx2.c
-    src/arch/x86_64/avx2/resize_avx2.c
-    src/arch/x86_64/avx2/resize_fused_avx2.c
-    src/arch/x86_64/avx2/resize_h_avx2.c
-    src/arch/x86_64/avx2/resize_v_avx2.c
-    src/arch/x86_64/avx512/avx512.c
-    src/arch/x86_64/scalar/color_scalar.c
-    src/arch/x86_64/scalar/resize_scalar.c
-    src/arch/x86_64/cpu_detect.c
-)
-
-# --- CORE ---
 set(SOURCES_CORE
     src/core/batch_builder.c
     src/core/buffer_lifecycle.c
@@ -116,13 +112,11 @@ set(SOURCES_CORE
     src/core/init.c
 )
 
-# --- HOT PATH ---
 set(SOURCES_HOT
     src/hot/batch_exec.c
     src/hot/pipeline_exec.c
 )
 
-# --- COLD PATH ---
 set(SOURCES_COLD
     src/cold/debug.c
     src/cold/error.c
@@ -130,9 +124,11 @@ set(SOURCES_COLD
     src/cold/validation.c
 )
 
-# --- PIPELINE ---
 set(SOURCES_PIPELINE
-    src/pipeline/batch_exec.c
+    src/pipeline/canvas.c
+    src/pipeline/layout.c
+    src/pipeline/bleed.c
+    src/pipeline/crop_marks.c
     src/pipeline/engine.c
     src/pipeline/fused_dispatch.c
     src/pipeline/fused_kernels.c
@@ -143,7 +139,6 @@ set(SOURCES_PIPELINE
     src/pipeline/pipeline_fuse.c
 )
 
-# --- MEMORY ---
 set(SOURCES_MEMORY
     src/memory/arena.c
     src/memory/hugepage.c
@@ -151,7 +146,6 @@ set(SOURCES_MEMORY
     src/memory/slab.c
 )
 
-# --- RUNTIME ---
 set(SOURCES_RUNTIME
     src/runtime/affinity.c
     src/runtime/cluster_registry.c
@@ -165,7 +159,6 @@ set(SOURCES_RUNTIME
     src/runtime/worker.c
 )
 
-# --- IO ---
 set(SOURCES_IO
     src/io/decoder/decoder_entry.c
     src/io/decoder/png_decoder.c
@@ -173,20 +166,19 @@ set(SOURCES_IO
     src/io/decoder/streaming_decoder.c
     src/io/encoder/encoder_entry.c
     src/io/encoder/jpeg_encoder.c
+    src/io/encoder/pdf_encoder.c
     src/io/vfs/http_stream.c
     src/io/vfs/memory_stream.c
     src/io/vfs/posix_io.c
     src/io/vfs/s3_adapter.c
 )
 
-# --- SECURITY ---
 set(SOURCES_SECURITY
     src/security/fuzz_hooks.c
     src/security/input_validator.c
     src/security/sandbox.c
 )
 
-# --- OBSERVABILITY ---
 set(SOURCES_OBSERVABILITY
     src/observability/binlog.c
     src/observability/logger.c
@@ -195,28 +187,32 @@ set(SOURCES_OBSERVABILITY
     src/observability/tracing.c
 )
 
-# --- PLUGINS ---
 set(SOURCES_PLUGINS
     src/plugins/plugin_crop.c
     src/plugins/plugin_grayscale.c
     src/plugins/plugin_registry.c
 )
 
-# --- ARCH ---
-# file(GLOB_RECURSE SOURCES_ARCH "${ARCH_DIR}/*.c")
+set(SOURCES_ARCH_X86
+    src/arch/x86_64/avx2/blit_avx2.c
+    src/arch/x86_64/avx2/color_avx2.c
+    src/arch/x86_64/avx2/fused_resize_color_norm_avx2.c
+    src/arch/x86_64/avx2/resize_avx2.c
+    src/arch/x86_64/avx2/resize_fused_avx2.c
+    src/arch/x86_64/avx2/resize_h_avx2.c
+    src/arch/x86_64/avx2/resize_v_avx2.c
+    src/arch/x86_64/avx512/avx512.c
+    src/arch/x86_64/scalar/color_scalar.c
+    src/arch/x86_64/scalar/resize_scalar.c
+    src/arch/x86_64/cpu_detect.c
+)
 
-# --- THIRD PARTY ---
 set(SOURCES_THIRD_PARTY
     src/third_party/stb/stb_image_impl.c
 )
 
-# --- TOOLS (internal tools, NOT cmd executables) ---
-set(SOURCES_TOOLS
-    src/tools/binlog_decode.c
-)
-
-# --- COMBINED LIBRARY SOURCES ---
-set(ENGINE_SOURCES
+# ── Combine all library sources ────────────────────────────
+set(IMGENGINE_LIB_SOURCES
     ${SOURCES_API}
     ${SOURCES_CORE}
     ${SOURCES_HOT}
@@ -228,82 +224,71 @@ set(ENGINE_SOURCES
     ${SOURCES_SECURITY}
     ${SOURCES_OBSERVABILITY}
     ${SOURCES_PLUGINS}
-    ${SOURCES_ARCH}
+    ${SOURCES_ARCH_X86}
     ${SOURCES_THIRD_PARTY}
 )
 
-# ------------------------------------------------------------
-# 7. BUILD TARGETS
-# ------------------------------------------------------------
+# ── Shared library ─────────────────────────────────────────
+add_library(imgengine SHARED ${IMGENGINE_LIB_SOURCES})
 
-# --- Plugin (dynamic, loadable at runtime) ---
-add_library(plugin_resize SHARED src/plugins/plugin_resize.c)
-target_include_directories(plugin_resize PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories(imgengine PUBLIC ${IMGENGINE_INCLUDES})
+target_compile_options(imgengine PRIVATE ${IMGENGINE_COMMON_FLAGS})
 
-# --- Core shared library ---
-add_library(imgengine SHARED ${ENGINE_SOURCES})
-
-target_include_directories(imgengine PRIVATE
-    ${TURBOJPEG_INCLUDE_DIR}
+target_link_libraries(imgengine
+    PUBLIC  ${TURBOJPEG_LIB}
+    PRIVATE Threads::Threads
 )
-
-target_link_libraries(imgengine PRIVATE
-    Threads::Threads
-    m
-)
-
-if(TURBOJPEG_LIB)
-    target_link_libraries(imgengine PRIVATE ${TURBOJPEG_LIB})
+if(MATH_LIB)
+    target_link_libraries(imgengine PRIVATE ${MATH_LIB})
 endif()
-
 if(NUMA_LIB)
     target_link_libraries(imgengine PRIVATE ${NUMA_LIB})
 endif()
-
-if(URING_LIB)
-    target_link_libraries(imgengine PRIVATE ${URING_LIB})
+if(IMGENGINE_SANITIZE)
+    target_link_libraries(imgengine PRIVATE -fsanitize=address,undefined)
 endif()
 
-if(ENABLE_SANITIZER)
-    target_link_libraries(imgengine PRIVATE "-fsanitize=address,undefined")
-endif()
+# ── Dynamic plugin (loadable) ──────────────────────────────
+add_library(plugin_resize SHARED src/plugins/plugin_resize.c)
+target_include_directories(plugin_resize PRIVATE ${IMGENGINE_INCLUDES})
+target_compile_options(plugin_resize PRIVATE ${IMGENGINE_COMMON_FLAGS})
 
-# --- CLI executable (NOT in library) ---
+# ── CLI executable ─────────────────────────────────────────
 add_executable(imgengine_cli
     src/cmd/imgengine/main.c
     src/cmd/imgengine/args.c
     src/cmd/imgengine/io_uring_engine.c
 )
+target_include_directories(imgengine_cli PRIVATE ${IMGENGINE_INCLUDES})
+target_compile_options(imgengine_cli PRIVATE ${IMGENGINE_COMMON_FLAGS})
 target_link_libraries(imgengine_cli PRIVATE imgengine)
 if(URING_LIB)
     target_link_libraries(imgengine_cli PRIVATE ${URING_LIB})
 endif()
-if(ENABLE_SANITIZER)
-    target_link_libraries(imgengine_cli PRIVATE "-fsanitize=address,undefined")
+if(IMGENGINE_SANITIZE)
+    target_link_libraries(imgengine_cli PRIVATE -fsanitize=address,undefined)
 endif()
 
-# --- Latency bench executable (NOT in library) ---
-add_executable(bench_lat
-    src/cmd/bench/lat_bench.c
-)
-target_link_libraries(bench_lat PRIVATE imgengine)
-if(ENABLE_SANITIZER)
-    target_link_libraries(bench_lat PRIVATE "-fsanitize=address,undefined")
+# ── Latency benchmark ──────────────────────────────────────
+if(IMGENGINE_BENCH)
+    add_executable(bench_lat src/cmd/bench/lat_bench.c)
+    target_include_directories(bench_lat PRIVATE ${IMGENGINE_INCLUDES})
+    target_compile_options(bench_lat PRIVATE ${IMGENGINE_COMMON_FLAGS})
+    target_link_libraries(bench_lat PRIVATE imgengine)
+    if(IMGENGINE_SANITIZE)
+        target_link_libraries(bench_lat PRIVATE -fsanitize=address,undefined)
+    endif()
 endif()
 
-# --- Throughput bench (optional) ---
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/cmd/bench/thr_bench.c")
-    add_executable(bench_thr src/cmd/bench/thr_bench.c)
-    target_link_libraries(bench_thr PRIVATE imgengine)
-endif()
-
-# ------------------------------------------------------------
-# 8. BUILD SUMMARY
-# ------------------------------------------------------------
+# ── Build summary ──────────────────────────────────────────
+message(STATUS "")
 message(STATUS "======================================")
-message(STATUS " ImgEngine Build Configuration")
+message(STATUS " imgengine ${PROJECT_VERSION} build config")
 message(STATUS "--------------------------------------")
-message(STATUS " Architecture : ${CMAKE_SYSTEM_PROCESSOR}")
-message(STATUS " SIMD Layer   : ${ARCH_DIR}")
-message(STATUS " Sanitizers   : ${ENABLE_SANITIZER}")
+message(STATUS " Architecture : ${IMGENGINE_ARCH}")
+message(STATUS " Sanitizers   : ${IMGENGINE_SANITIZE}")
+message(STATUS " LTO          : ${IMGENGINE_LTO}")
+message(STATUS " Sandbox      : ${IMGENGINE_SANDBOX}")
+message(STATUS " Bench        : ${IMGENGINE_BENCH}")
 message(STATUS "======================================")
+message(STATUS "")

@@ -1,5 +1,7 @@
 // src/cmd/imgengine/main.c
 
+// Production CLI — all flags from original design, new unified API.
+
 #define _GNU_SOURCE
 
 #include <liburing.h>
@@ -9,183 +11,366 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cmd/imgengine/args.h"
-#include "cmd/imgengine/io_uring_engine.h"
 #include "api/v1/img_api.h"
+#include "api/v1/img_job.h"
+#include "api/v1/img_error.h"
 
-typedef struct
+static void print_usage(const char *bin)
 {
-    int fd;
-    uint8_t *buf;
-    size_t size;
-} img_io_task_t;
+    printf("\nIMGENGINE CLI\n");
+    printf("Professional Photo Layout & Print Pipeline\n");
+    printf("------------------------------------------------------------\n\n");
 
-/* Round size up to nearest multiple of align (align must be power of 2) */
-static inline size_t align_up(size_t size, size_t align)
-{
-    return (size + align - 1) & ~(align - 1);
-}
+    printf("USAGE:\n  %s --input <file> [--output <file>] [OPTIONS]\n\n", bin);
 
-static int submit_read(img_io_uring_t *u, img_io_task_t *task)
-{
-    struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
-    if (!sqe)
-        return -1;
+    printf("REQUIRED:\n");
+    printf("  --input <file>         Input image (jpg/png)\n\n");
 
-    io_uring_prep_read(sqe, task->fd, task->buf, task->size, 0);
-    io_uring_sqe_set_data(sqe, task);
-    return 0;
-}
+    printf("OUTPUT:\n");
+    printf("  --output <file>        Output file .jpg/.png/.pdf (default: output.jpg)\n\n");
 
-static int submit_write(img_io_uring_t *u, int fd, uint8_t *buf, size_t size)
-{
-    struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
-    if (!sqe)
-        return -1;
+    printf("LAYOUT OPTIONS:\n");
+    printf("  --cols <int>           Columns (default: 2)\n");
+    printf("  --rows <int>           Rows    (default: 3)\n");
+    printf("  --gap <px>             Gap between photos (default: 15)\n");
+    printf("  --padding <px>         Page margin (default: 20)\n\n");
 
-    io_uring_prep_write(sqe, fd, buf, size, 0);
-    return 0;
+    printf("PHOTO SETTINGS:\n");
+    printf("  --width <cm>           Photo width  in cm (default: 4.5)\n");
+    printf("  --height <cm>          Photo height in cm (default: 3.5)\n");
+    printf("  --dpi <int>            Print DPI (default: 300)\n");
+    printf("  --border <px>          Border thickness (default: 2)\n\n");
+
+    printf("PRINT FEATURES:\n");
+    printf("  --bleed <px>           Edge bleed (default: 10)\n");
+    printf("  --crop-mark <px>       Mark length (default: 20)\n");
+    printf("  --crop-thickness <px>  Mark thickness (default: 2)\n");
+    printf("  --crop-offset <px>     Distance from image edge (default: 8)\n\n");
+
+    printf("OTHER:\n");
+    printf("  --threads <int>        Worker threads (default: 1)\n");
+    printf("  --quiet                Suppress output\n");
+    printf("  --help                 Show this help\n\n");
+
+    printf("EXAMPLES:\n\n");
+    printf("  Passport sheet:\n");
+    printf("    %s --input photo.jpg --cols 3 --rows 2\n\n", bin);
+    printf("  Print-ready A4 with crop marks:\n");
+    printf("    %s --input photo.jpg --output sheet.jpg \\\n", bin);
+    printf("        --cols 6 --rows 2 --width 3.5 --height 3.0 \\\n");
+    printf("        --bleed 10 --crop-mark 25 --crop-offset 8\n\n");
+    printf("  PDF export:\n");
+    printf("    %s --input photo.jpg --output sheet.pdf --dpi 300\n\n", bin);
 }
 
 int main(int argc, char **argv)
 {
-    img_cli_options_t opts;
-
-    if (img_parse_args(argc, argv, &opts) != 0)
+    if (argc == 1)
     {
-        img_print_usage(argv[0]);
+        print_usage(argv[0]);
+        return 0;
+    }
+
+    const char *input = NULL;
+    const char *output = "output.jpg";
+    uint32_t threads = 1;
+    int verbose = 1;
+
+    img_job_t job;
+    img_job_defaults(&job);
+
+    /* ── Argument parser ── */
+    for (int i = 1; i < argc; i++)
+    {
+        if (!strcmp(argv[i], "--input") && i + 1 < argc)
+            input = argv[++i];
+        else if (!strcmp(argv[i], "--output") && i + 1 < argc)
+            output = argv[++i];
+        else if (!strcmp(argv[i], "--cols") && i + 1 < argc)
+            job.cols = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--rows") && i + 1 < argc)
+            job.rows = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--gap") && i + 1 < argc)
+            job.gap = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--dpi") && i + 1 < argc)
+            job.dpi = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--width") && i + 1 < argc)
+            job.photo_w_cm = (float)atof(argv[++i]);
+        else if (!strcmp(argv[i], "--height") && i + 1 < argc)
+            job.photo_h_cm = (float)atof(argv[++i]);
+        else if (!strcmp(argv[i], "--border") && i + 1 < argc)
+            job.border_px = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--padding") && i + 1 < argc)
+            job.padding = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--bleed") && i + 1 < argc)
+            job.bleed_px = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--crop-mark") && i + 1 < argc)
+            job.crop_mark_px = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--crop-thickness") && i + 1 < argc)
+            job.crop_thickness = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--crop-offset") && i + 1 < argc)
+            job.crop_offset_px = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--threads") && i + 1 < argc)
+            threads = (uint32_t)atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--quiet"))
+            verbose = 0;
+        else if (!strcmp(argv[i], "--help"))
+        {
+            print_usage(argv[0]);
+            return 0;
+        }
+        else
+        {
+            fprintf(stderr, "unknown argument: %s\n\n", argv[i]);
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+
+    /* ── Validation ── */
+    if (!input)
+    {
+        fprintf(stderr, "error: --input is required\n");
+        return 1;
+    }
+    if (job.cols == 0 || job.rows == 0)
+    {
+        fprintf(stderr, "error: cols and rows must be > 0\n");
+        return 1;
+    }
+    if (job.dpi == 0)
+    {
+        fprintf(stderr, "error: dpi must be > 0\n");
+        return 1;
+    }
+    if (job.photo_w_cm <= 0.0f || job.photo_h_cm <= 0.0f)
+    {
+        fprintf(stderr, "error: width/height must be > 0\n");
         return 1;
     }
 
-    /* ENGINE INIT */
-    img_engine_t *engine = img_api_init(opts.threads);
+    /* ── Engine init ── */
+    img_engine_t *engine = img_api_init(threads);
     if (!engine)
     {
         fprintf(stderr, "engine init failed\n");
         return 1;
     }
 
-    /* IO_URING INIT */
-    img_io_uring_t u;
-    if (img_io_uring_init(&u, IMG_IO_URING_DEPTH) != 0)
+    if (verbose)
     {
-        fprintf(stderr, "io_uring init failed\n");
-        return 1;
+        printf("imgengine | %dx%d grid | %.1fx%.1f cm | %u dpi\n",
+               job.cols, job.rows,
+               job.photo_w_cm, job.photo_h_cm,
+               job.dpi);
+        printf("input:  %s\n", input);
+        printf("output: %s\n", output);
     }
 
-    /* OPEN INPUT FILE */
-    int fd = open(opts.input_path, O_RDONLY);
-    if (fd < 0)
+    /* ── Run job ── */
+    img_result_t r = img_api_run_job(engine, input, output, &job);
+
+    if (r != IMG_SUCCESS)
     {
-        perror("open input");
-        return 1;
+        fprintf(stderr, "job failed: %s (%d)\n", img_result_name(r), r);
+    }
+    else if (verbose)
+    {
+        printf("done: %s\n", output);
     }
 
-    /* GET FILE SIZE */
-    off_t file_size = lseek(fd, 0, SEEK_END);
-    if (file_size <= 0)
-    {
-        fprintf(stderr, "invalid file size\n");
-        close(fd);
-        return 1;
-    }
-    lseek(fd, 0, SEEK_SET);
-
-    /*
-     * aligned_alloc() requires size to be a multiple of alignment.
-     * Round up the actual file size to the next 4096-byte boundary.
-     * We read only file_size bytes — the padding is unused.
-     */
-    const size_t ALIGN = 4096;
-    size_t alloc_size = align_up((size_t)file_size, ALIGN);
-    uint8_t *buffer = aligned_alloc(ALIGN, alloc_size);
-
-    if (!buffer)
-    {
-        fprintf(stderr, "buffer alloc failed (size=%zu)\n", alloc_size);
-        close(fd);
-        return 1;
-    }
-
-    img_io_task_t task = {
-        .fd = fd,
-        .buf = buffer,
-        .size = (size_t)file_size, /* read actual bytes, not padded size */
-    };
-
-    /* SUBMIT READ */
-    submit_read(&u, &task);
-    io_uring_submit(&u.ring);
-
-    /* WAIT FOR READ COMPLETION */
-    struct io_uring_cqe *cqe;
-    io_uring_wait_cqe(&u.ring, &cqe);
-
-    if (cqe->res < 0)
-    {
-        fprintf(stderr, "io_uring read failed: %d\n", cqe->res);
-        io_uring_cqe_seen(&u.ring, cqe);
-        free(buffer);
-        close(fd);
-        return 1;
-    }
-    io_uring_cqe_seen(&u.ring, cqe);
-
-    /* PROCESS */
-    uint8_t *out = NULL;
-    size_t out_size = 0;
-
-    // int ret = img_api_process_raw(engine, buffer, (size_t)file_size, &out, &out_size);
-    // if (ret != 0 || !out)
-    // {
-    //     fprintf(stderr, "processing failed (ret=%d)\n", ret);
-    //     free(buffer);
-    //     close(fd);
-    //     return 1;
-    // }
-
-    img_result_t ret = img_api_process_raw(
-        engine, buffer, (size_t)file_size, &out, &out_size);
-
-    if (ret != IMG_SUCCESS || !out)
-    {
-        fprintf(stderr, "processing failed: %s (%d)\n",
-                img_result_name(ret), ret);
-        free(buffer);
-        close(fd);
-        img_api_shutdown(engine);
-        return 1;
-    }
-
-    /* WRITE OUTPUT */
-    int out_fd = open(opts.output_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (out_fd < 0)
-    {
-        perror("open output");
-        free(buffer);
-        free(out);
-        close(fd);
-        return 1;
-    }
-
-    submit_write(&u, out_fd, out, out_size);
-    io_uring_submit(&u.ring);
-
-    io_uring_wait_cqe(&u.ring, &cqe);
-    io_uring_cqe_seen(&u.ring, cqe);
-
-    /* CLEANUP */
-    close(fd);
-    close(out_fd);
-    free(buffer);
-    free(out);
-
-    img_io_uring_destroy(&u);
     img_api_shutdown(engine);
-
-    if (opts.verbose)
-        printf("done: %s -> %s (%zu bytes)\n",
-               opts.input_path, opts.output_path, out_size);
-
-    return 0;
+    return (r == IMG_SUCCESS) ? 0 : 1;
 }
+
+// // src/cmd/imgengine/main.c
+
+// #define _GNU_SOURCE
+
+// #include <liburing.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <stdlib.h>
+// #include <stdio.h>
+// #include <string.h>
+
+// #include "cmd/imgengine/args.h"
+// #include "cmd/imgengine/io_uring_engine.h"
+// #include "api/v1/img_api.h"
+
+// typedef struct
+// {
+//     int fd;
+//     uint8_t *buf;
+//     size_t size;
+// } img_io_task_t;
+
+// /* Round size up to nearest multiple of align (align must be power of 2) */
+// static inline size_t align_up(size_t size, size_t align)
+// {
+//     return (size + align - 1) & ~(align - 1);
+// }
+
+// static int submit_read(img_io_uring_t *u, img_io_task_t *task)
+// {
+//     struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
+//     if (!sqe)
+//         return -1;
+
+//     io_uring_prep_read(sqe, task->fd, task->buf, task->size, 0);
+//     io_uring_sqe_set_data(sqe, task);
+//     return 0;
+// }
+
+// static int submit_write(img_io_uring_t *u, int fd, uint8_t *buf, size_t size)
+// {
+//     struct io_uring_sqe *sqe = io_uring_get_sqe(&u->ring);
+//     if (!sqe)
+//         return -1;
+
+//     io_uring_prep_write(sqe, fd, buf, size, 0);
+//     return 0;
+// }
+
+// int main(int argc, char **argv)
+// {
+//     img_cli_options_t opts;
+
+//     if (img_parse_args(argc, argv, &opts) != 0)
+//     {
+//         img_print_usage(argv[0]);
+//         return 1;
+//     }
+
+//     /* ENGINE INIT */
+//     img_engine_t *engine = img_api_init(opts.threads);
+//     if (!engine)
+//     {
+//         fprintf(stderr, "engine init failed\n");
+//         return 1;
+//     }
+
+//     /* IO_URING INIT */
+//     img_io_uring_t u;
+//     if (img_io_uring_init(&u, IMG_IO_URING_DEPTH) != 0)
+//     {
+//         fprintf(stderr, "io_uring init failed\n");
+//         return 1;
+//     }
+
+//     /* OPEN INPUT FILE */
+//     int fd = open(opts.input_path, O_RDONLY);
+//     if (fd < 0)
+//     {
+//         perror("open input");
+//         return 1;
+//     }
+
+//     /* GET FILE SIZE */
+//     off_t file_size = lseek(fd, 0, SEEK_END);
+//     if (file_size <= 0)
+//     {
+//         fprintf(stderr, "invalid file size\n");
+//         close(fd);
+//         return 1;
+//     }
+//     lseek(fd, 0, SEEK_SET);
+
+//     /*
+//      * aligned_alloc() requires size to be a multiple of alignment.
+//      * Round up the actual file size to the next 4096-byte boundary.
+//      * We read only file_size bytes — the padding is unused.
+//      */
+//     const size_t ALIGN = 4096;
+//     size_t alloc_size = align_up((size_t)file_size, ALIGN);
+//     uint8_t *buffer = aligned_alloc(ALIGN, alloc_size);
+
+//     if (!buffer)
+//     {
+//         fprintf(stderr, "buffer alloc failed (size=%zu)\n", alloc_size);
+//         close(fd);
+//         return 1;
+//     }
+
+//     img_io_task_t task = {
+//         .fd = fd,
+//         .buf = buffer,
+//         .size = (size_t)file_size, /* read actual bytes, not padded size */
+//     };
+
+//     /* SUBMIT READ */
+//     submit_read(&u, &task);
+//     io_uring_submit(&u.ring);
+
+//     /* WAIT FOR READ COMPLETION */
+//     struct io_uring_cqe *cqe;
+//     io_uring_wait_cqe(&u.ring, &cqe);
+
+//     if (cqe->res < 0)
+//     {
+//         fprintf(stderr, "io_uring read failed: %d\n", cqe->res);
+//         io_uring_cqe_seen(&u.ring, cqe);
+//         free(buffer);
+//         close(fd);
+//         return 1;
+//     }
+//     io_uring_cqe_seen(&u.ring, cqe);
+
+//     /* PROCESS */
+//     uint8_t *out = NULL;
+//     size_t out_size = 0;
+
+//     // int ret = img_api_process_raw(engine, buffer, (size_t)file_size, &out, &out_size);
+//     // if (ret != 0 || !out)
+//     // {
+//     //     fprintf(stderr, "processing failed (ret=%d)\n", ret);
+//     //     free(buffer);
+//     //     close(fd);
+//     //     return 1;
+//     // }
+
+//     img_result_t ret = img_api_process_raw(
+//         engine, buffer, (size_t)file_size, &out, &out_size);
+
+//     if (ret != IMG_SUCCESS || !out)
+//     {
+//         fprintf(stderr, "processing failed: %s (%d)\n",
+//                 img_result_name(ret), ret);
+//         free(buffer);
+//         close(fd);
+//         img_api_shutdown(engine);
+//         return 1;
+//     }
+
+//     /* WRITE OUTPUT */
+//     int out_fd = open(opts.output_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+//     if (out_fd < 0)
+//     {
+//         perror("open output");
+//         free(buffer);
+//         free(out);
+//         close(fd);
+//         return 1;
+//     }
+
+//     submit_write(&u, out_fd, out, out_size);
+//     io_uring_submit(&u.ring);
+
+//     io_uring_wait_cqe(&u.ring, &cqe);
+//     io_uring_cqe_seen(&u.ring, cqe);
+
+//     /* CLEANUP */
+//     close(fd);
+//     close(out_fd);
+//     free(buffer);
+//     free(out);
+
+//     img_io_uring_destroy(&u);
+//     img_api_shutdown(engine);
+
+//     if (opts.verbose)
+//         printf("done: %s -> %s (%zu bytes)\n",
+//                opts.input_path, opts.output_path, out_size);
+
+//     return 0;
+// }

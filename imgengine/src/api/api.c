@@ -29,7 +29,15 @@
 #include "io/decoder/decoder_entry.h"
 #include "io/encoder/encoder_entry.h"
 
-#include <string.h>
+#include "pipeline/canvas.h"
+#include "pipeline/layout.h"
+#include "io/encoder/pdf_encoder.h"
+
+#include <string.h> /* strrchr */
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -47,6 +55,230 @@ static img_worker_t g_workers[64];
 // ============================================================
 // 🔥 FORWARD
 // ============================================================
+
+// ================================================================
+// FILE 12: src/api/api.c  — ADD img_api_run_job() to existing file
+// This is the full pipeline: decode → layout → bleed →
+// crop marks → encode (JPEG or PDF by extension).
+// Add this block AFTER existing functions in api.c.
+// ================================================================
+
+/* forward declarations for pipeline stages */
+img_result_t img_apply_bleed(img_buffer_t *, const img_layout_t *, uint32_t);
+img_result_t img_draw_crop_marks(img_buffer_t *, const img_layout_t *, const img_job_t *);
+
+/*
+ * detect_output_format()
+ *
+ * Returns 1 if output path ends with .pdf (case-insensitive), 0 otherwise.
+ */
+static int is_pdf_output(const char *path)
+{
+    const char *dot = strrchr(path, '.');
+    if (!dot)
+        return 0;
+    return (dot[1] == 'p' || dot[1] == 'P') &&
+           (dot[2] == 'd' || dot[2] == 'D') &&
+           (dot[3] == 'f' || dot[3] == 'F') &&
+           dot[4] == '\0';
+}
+
+/*
+ * load_file_mmap()
+ *
+ * Memory-map a file. Returns IMG_SUCCESS on success.
+ * Caller must munmap(*data, *size) when done.
+ */
+static img_result_t load_file_mmap(
+    const char *path,
+    uint8_t **data,
+    size_t *size)
+{
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return IMG_ERR_IO;
+
+    off_t file_size = lseek(fd, 0, SEEK_END);
+    if (file_size <= 0)
+    {
+        close(fd);
+        return IMG_ERR_IO;
+    }
+
+    void *ptr = mmap(NULL, (size_t)file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    if (ptr == MAP_FAILED)
+        return IMG_ERR_IO;
+
+    *data = (uint8_t *)ptr;
+    *size = (size_t)file_size;
+    return IMG_SUCCESS;
+}
+
+/*
+ * img_api_run_job()
+ *
+ * Full print pipeline:
+ *
+ *  1. Validate job ABI version
+ *  2. mmap input file
+ *  3. Security validate
+ *  4. Decode JPEG/PNG → img_buffer_t (slab)
+ *  5. Allocate A4 canvas (slab), fill background
+ *  6. Compute grid geometry
+ *  7. Resize photo → grid cell size (slab)
+ *  8. Blit photo N×M times onto canvas (AVX2)
+ *  9. Apply bleed (in-place)
+ * 10. Draw crop marks (in-place)
+ * 11. Encode canvas → JPEG or PDF
+ * 12. Free all slab allocations
+ *
+ * Thread-safe: uses per-call arena and global slab pool.
+ * Zero heap allocation in hot path (steps 7-10).
+ */
+img_result_t img_api_run_job(
+    img_engine_t *engine,
+    const char *input_path,
+    const char *output_path,
+    const img_job_t *job)
+{
+    if (!engine || !input_path || !output_path || !job)
+        return IMG_ERR_SECURITY;
+
+    if (job->abi_version != IMG_JOB_ABI_VERSION)
+        return IMG_ERR_INTERNAL;
+
+    /* ── 1. Load input ── */
+    uint8_t *file_data = NULL;
+    size_t file_size = 0;
+
+    img_result_t r = load_file_mmap(input_path, &file_data, &file_size);
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] cannot open input '%s': %s\n",
+                input_path, img_result_name(r));
+        return r;
+    }
+
+    /* ── 2. Security gate ── */
+    r = img_security_validate_request(16384, 16384, file_size);
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] security reject: %s\n", img_result_name(r));
+        munmap(file_data, file_size);
+        return r;
+    }
+
+    /* ── 3. Per-job context ── */
+    img_ctx_t ctx = {0};
+    ctx.thread_id = 0;
+    ctx.caps = engine->caps;
+    ctx.local_pool = engine->global_pool;
+
+    /* Scratch arena for cells array (~few KB) */
+    img_arena_t *arena = img_arena_create(1 * 1024 * 1024);
+    if (!arena)
+    {
+        munmap(file_data, file_size);
+        return IMG_ERR_NOMEM;
+    }
+
+    /* ── 4. Decode ── */
+    img_buffer_t photo = {0};
+    r = (img_result_t)img_decode_to_buffer(&ctx, file_data, file_size, &photo);
+    munmap(file_data, file_size);
+
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] decode failed: %s\n", img_result_name(r));
+        img_arena_destroy(arena);
+        return r;
+    }
+
+    /* ── 5. Allocate A4 canvas ── */
+    img_canvas_t canvas = {0};
+    r = img_canvas_init(&canvas, engine->global_pool, job);
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] canvas alloc failed: %s\n", img_result_name(r));
+        img_slab_free(engine->global_pool, photo.data);
+        img_arena_destroy(arena);
+        return r;
+    }
+
+    /* ── 6-8. Grid layout + blit ── */
+    img_layout_t layout = {0};
+    r = img_layout_grid(&canvas, &photo, job, &layout, arena, engine->global_pool);
+    img_slab_free(engine->global_pool, photo.data);
+
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] layout failed: %s\n", img_result_name(r));
+        img_canvas_free(&canvas, engine->global_pool);
+        img_arena_destroy(arena);
+        return r;
+    }
+
+    /* ── 9. Bleed ── */
+    r = img_apply_bleed(&canvas.buf, &layout, job->bleed_px);
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] bleed failed: %s\n", img_result_name(r));
+        img_canvas_free(&canvas, engine->global_pool);
+        img_arena_destroy(arena);
+        return r;
+    }
+
+    /* ── 10. Crop marks ── */
+    r = img_draw_crop_marks(&canvas.buf, &layout, job);
+    if (r != IMG_SUCCESS)
+    {
+        fprintf(stderr, "[JOB] crop marks failed: %s\n", img_result_name(r));
+        img_canvas_free(&canvas, engine->global_pool);
+        img_arena_destroy(arena);
+        return r;
+    }
+
+    /* ── 11. Encode output ── */
+    if (is_pdf_output(output_path))
+    {
+        r = img_encode_pdf(&canvas.buf, output_path, job->dpi);
+    }
+    else
+    {
+        /* JPEG output */
+        uint8_t *out = NULL;
+        size_t out_size = 0;
+
+        r = (img_result_t)img_encode_from_buffer(
+            &ctx, &canvas.buf, &out, &out_size);
+
+        if (r == IMG_SUCCESS && out)
+        {
+            FILE *f = fopen(output_path, "wb");
+            if (f)
+            {
+                fwrite(out, 1, out_size, f);
+                fclose(f);
+            }
+            else
+            {
+                r = IMG_ERR_IO;
+            }
+            free(out);
+        }
+    }
+
+    if (r != IMG_SUCCESS)
+        fprintf(stderr, "[JOB] encode failed: %s\n", img_result_name(r));
+
+    /* ── 12. Free ── */
+    img_canvas_free(&canvas, engine->global_pool);
+    img_arena_destroy(arena);
+
+    return r;
+}
 
 /*
  * decode_image_secure()
@@ -205,9 +437,9 @@ img_engine_t *img_api_init(uint32_t workers)
         512 * 1024 * 1024, // 512MB total pool (supports ~16 concurrent 4K images)
         32 * 1024 * 1024); // 32MB per block  (fits 4K RGB: 3840*2160*3 = 24MB)
 
-    // g_engine.global_pool = img_slab_create(
-    //     64 * 1024 * 1024,
-    //     64 * 1024);
+//    g_engine.global_pool = img_slab_create(
+//        1024ULL * 1024 * 1024,   /* 1GB total pool */
+//        64ULL   * 1024 * 1024);  /* 64MB per block  */
 
     if (!g_engine.global_pool)
         return NULL;
