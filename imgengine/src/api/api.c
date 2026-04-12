@@ -437,9 +437,9 @@ img_engine_t *img_api_init(uint32_t workers)
         512 * 1024 * 1024, // 512MB total pool (supports ~16 concurrent 4K images)
         32 * 1024 * 1024); // 32MB per block  (fits 4K RGB: 3840*2160*3 = 24MB)
 
-//    g_engine.global_pool = img_slab_create(
-//        1024ULL * 1024 * 1024,   /* 1GB total pool */
-//        64ULL   * 1024 * 1024);  /* 64MB per block  */
+    //    g_engine.global_pool = img_slab_create(
+    //        1024ULL * 1024 * 1024,   /* 1GB total pool */
+    //        64ULL   * 1024 * 1024);  /* 64MB per block  */
 
     if (!g_engine.global_pool)
         return NULL;
