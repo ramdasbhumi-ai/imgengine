@@ -1,20 +1,12 @@
-// ./src/memory/slab.c
-
-// ./src/memory/slab.c
+// src/memory/slab.c
 
 #include "memory/slab.h"
 #include "memory/slab_internal.h"
 #include "memory/numa.h"
+#include "security/poision.h"
 
 #include <stdlib.h>
 #include <stdint.h>
-
-#include "security/poision.h"
-
-static void free_block(void *ptr, size_t size)
-{
-    IMG_POISON_MEMORY(ptr, size);
-}
 
 static inline size_t align64(size_t x)
 {
@@ -65,6 +57,8 @@ uint8_t *img_slab_alloc(img_slab_pool_t *pool)
     slab_block_t *block = pool->free_list;
     pool->free_list = block->next;
 
+    img_poison_block(block, pool->block_size); /* poison on alloc: detect stale reads */
+
     return (uint8_t *)block;
 }
 
@@ -72,6 +66,8 @@ void img_slab_free(img_slab_pool_t *pool, void *ptr)
 {
     if (!pool || !ptr)
         return;
+
+    img_poison_block(ptr, pool->block_size); /* poison on free: detect use-after-free */
 
     slab_block_t *block = (slab_block_t *)ptr;
     block->next = pool->free_list;
@@ -86,8 +82,6 @@ void img_slab_destroy(img_slab_pool_t *pool)
     img_numa_free(pool->memory, pool->total_size);
     free(pool);
 }
-
-/* FILE: src/memory/slab.c — add this function */
 
 size_t img_slab_block_size(img_slab_pool_t *pool)
 {

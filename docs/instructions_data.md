@@ -214,3 +214,7 @@ img_api_run_job()                          [src/api/api.c]
 
 ./imgengine_cli --input photo.jpg --output out.jpg --quiet
 */
+
+## REMOTE (RPC / distributed execution)
+
+    Infuture-Usese

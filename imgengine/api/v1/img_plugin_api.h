@@ -26,8 +26,8 @@ typedef struct img_ctx img_ctx_t;
 typedef struct img_buffer img_buffer_t;
 typedef struct img_batch img_batch_t;
 
-typedef void (*img_op_fn)(img_ctx_t *, img_buffer_t *);
-typedef void (*img_batch_op_fn)(img_ctx_t *, img_batch_t *);
+typedef void (*img_op_fn)(img_ctx_t *, img_buffer_t *, void *);
+typedef void (*img_batch_op_fn)(img_ctx_t *, img_batch_t *, void *);
 
 /*
  * 🔥 PLUGIN DESCRIPTOR

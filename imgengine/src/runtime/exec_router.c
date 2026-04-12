@@ -1,13 +1,11 @@
 // ./src/runtime/exec_router.c
 
-// ./src/runtime/exec_router.c
-
 #include "runtime/exec_router.h"
 #include "runtime/rpc_client.h"
 #include "pipeline/jump_table.h"
 #include "core/opcodes.h"
 
-// 🔥 smart routing (L8 brain)
+// 🔥 smart routing (L10 brain)
 img_exec_mode_t img_exec_route(uint32_t op_code)
 {
     switch (op_code)

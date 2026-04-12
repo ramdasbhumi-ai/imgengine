@@ -1,12 +1,10 @@
 // ./src/plugins/plugin_resize.c
 
-// ./src/plugins/plugin_resize.c
-
 #include "api/v1/img_plugin_api.h"
 #include "core/buffer.h"
 #include <stddef.h>
 
-static void resize_single(img_ctx_t *ctx, img_buffer_t *buf)
+static void resize_single(img_ctx_t *ctx, img_buffer_t *buf, void *)
 {
     (void)ctx;
 

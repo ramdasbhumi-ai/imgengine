@@ -8,7 +8,7 @@
 
 #include <stddef.h>
 
-static void grayscale_exec(img_ctx_t *ctx, img_buffer_t *buf)
+static void grayscale_exec(img_ctx_t *ctx, img_buffer_t *buf, void *)
 {
     (void)ctx;
 

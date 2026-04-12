@@ -1,7 +1,5 @@
 // ./src/runtime/plugin_loader.c
 
-// ./src/runtime/plugin_loader.c
-
 #include "api/v1/img_plugin_api.h"
 #include "runtime/plugin_loader.h"
 #include "pipeline/jump_table.h"
@@ -17,6 +15,8 @@ extern const img_plugin_descriptor_t *__stop_img_plugins[];
 int img_plugin_load_all(const char *directory)
 {
     const img_plugin_descriptor_t **it;
+    if (!directory)
+        return -1;
 
     for (it = __start_img_plugins; it < __stop_img_plugins; ++it)
     {

@@ -2,11 +2,8 @@
 
 // ./src/runtime/rpc_client.c
 
-
 #include "runtime/rpc_client.h"
 #include "runtime/rpc_protocol.h"
-// #include "api/v1/img_types.h"
-// #include "pipeline/pipeline_types.h"
 #include "core/buffer.h"
 
 #include <string.h>

@@ -59,6 +59,7 @@ set(IMGENGINE_COMMON_FLAGS
 
 if(IMGENGINE_LTO)
     list(APPEND IMGENGINE_COMMON_FLAGS -flto)
+    # list(APPEND IMGENGINE_COMMON_FLAGS -flto -Werror) This line must be uncommented in future
     set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -flto")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
 endif()
@@ -149,12 +150,12 @@ set(SOURCES_MEMORY
 set(SOURCES_RUNTIME
     src/runtime/affinity.c
     src/runtime/cluster_registry.c
-    src/runtime/exec_router.c
+    # src/runtime/exec_router.c
     src/runtime/plugin_loader.c
     src/runtime/queue_mpmc.c
     src/runtime/queue_spsc.c
-    src/runtime/rpc_client.c
-    src/runtime/rpc_server.c
+    # src/runtime/rpc_client.c
+    # src/runtime/rpc_server.c
     src/runtime/scheduler.c
     src/runtime/worker.c
 )
@@ -170,7 +171,7 @@ set(SOURCES_IO
     src/io/vfs/http_stream.c
     src/io/vfs/memory_stream.c
     src/io/vfs/posix_io.c
-    src/io/vfs/s3_adapter.c
+    # src/io/vfs/s3_adapter.c
 )
 
 set(SOURCES_SECURITY
