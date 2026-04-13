@@ -10,12 +10,25 @@
 static struct option long_opts[] = {
     {"input", required_argument, 0, 'i'},
     {"output", required_argument, 0, 'o'},
-    {"width", required_argument, 0, 'w'},
-    {"height", required_argument, 0, 'h'},
+
+    {"cols", required_argument, 0, 1},
+    {"rows", required_argument, 0, 2},
+    {"gap", required_argument, 0, 3},
+    {"padding", required_argument, 0, 4},
+
+    {"width", required_argument, 0, 5},
+    {"height", required_argument, 0, 6},
+    {"dpi", required_argument, 0, 7},
+    {"border", required_argument, 0, 8},
+
+    {"bleed", required_argument, 0, 9},
+    {"crop-mark", required_argument, 0, 10},
+    {"crop-thickness", required_argument, 0, 11},
+    {"crop-offset", required_argument, 0, 12},
+
     {"threads", required_argument, 0, 't'},
-    {"bench", no_argument, 0, 'b'},
     {"verbose", no_argument, 0, 'v'},
-    {"help", no_argument, 0, '?'},
+
     {0, 0, 0, 0}};
 
 int img_parse_args(int argc, char **argv, img_cli_options_t *opts)
@@ -37,24 +50,52 @@ int img_parse_args(int argc, char **argv, img_cli_options_t *opts)
         case 'o':
             opts->output_path = optarg;
             break;
-        case 'w':
-            opts->width = atoi(optarg);
+
+        case 1:
+            opts->cols = atoi(optarg);
             break;
-        case 'h':
-            opts->height = atoi(optarg);
+        case 2:
+            opts->rows = atoi(optarg);
             break;
+        case 3:
+            opts->gap = atoi(optarg);
+            break;
+        case 4:
+            opts->padding = atoi(optarg);
+            break;
+
+        case 5:
+            opts->photo_w_cm = atof(optarg);
+            break;
+        case 6:
+            opts->photo_h_cm = atof(optarg);
+            break;
+        case 7:
+            opts->dpi = atoi(optarg);
+            break;
+        case 8:
+            opts->border = atoi(optarg);
+            break;
+
+        case 9:
+            opts->bleed = atoi(optarg);
+            break;
+        case 10:
+            opts->crop_mark = atoi(optarg);
+            break;
+        case 11:
+            opts->crop_thickness = atoi(optarg);
+            break;
+        case 12:
+            opts->crop_offset = atoi(optarg);
+            break;
+
         case 't':
             opts->threads = atoi(optarg);
-            break;
-        case 'b':
-            opts->bench_mode = true;
             break;
         case 'v':
             opts->verbose = true;
             break;
-
-        default:
-            return -1;
         }
     }
 
@@ -69,42 +110,60 @@ int img_parse_args(int argc, char **argv, img_cli_options_t *opts)
 
 void img_print_usage(const char *bin)
 {
-    printf("Usage:\n");
-    printf("  %s -i input.jpg -o output.jpg [options]\n\n", bin);
-    printf("Options:\n");
-    printf("  -w --width <n>\n");
-    printf("  -h --height <n>\n");
-    printf("  -t --threads <n>\n");
-    printf("  -b --bench\n");
-    printf("  -v --verbose\n");
+    printf("\nIMGENGINE CLI\n");
+    printf("Professional Photo Layout & Print Pipeline\n");
+    printf("------------------------------------------------------------\n\n");
+
+    printf("USAGE:\n  %s --input <file> [--output <file>] [OPTIONS]\n\n", bin);
+
+    printf("REQUIRED:\n");
+    printf("  --input <file>         Input image (jpg/png)\n\n");
+
+    printf("OUTPUT:\n");
+    printf("  --output <file>        Output file .jpg/.png/.pdf (default: output.jpg)\n\n");
+
+    printf("LAYOUT OPTIONS:\n");
+    printf("  --cols <int>           Columns (default: 2)\n");
+    printf("  --rows <int>           Rows    (default: 3)\n");
+    printf("  --gap <px>             Gap between photos (default: 15)\n");
+    printf("  --padding <px>         Page margin (default: 20)\n\n");
+
+    printf("PHOTO SETTINGS:\n");
+    printf("  --width <cm>           Photo width  in cm (default: 4.5)\n");
+    printf("  --height <cm>          Photo height in cm (default: 3.5)\n");
+    printf("  --dpi <int>            Print DPI (default: 300)\n");
+    printf("  --border <px>          Border thickness (default: 2)\n\n");
+
+    printf("PRINT FEATURES:\n");
+    printf("  --bleed <px>           Edge bleed (default: 10)\n");
+    printf("  --crop-mark <px>       Mark length (default: 20)\n");
+    printf("  --crop-thickness <px>  Mark thickness (default: 2)\n");
+    printf("  --crop-offset <px>     Distance from image edge (default: 8)\n\n");
+
+    printf("OTHER:\n");
+    printf("  --threads <int>        Worker threads (default: 1)\n");
+    printf("  --quiet                Suppress output\n");
+    printf("  --help                 Show this help\n\n");
+
+    printf("EXAMPLES:\n\n");
+    printf("  Passport sheet:\n");
+    printf("    %s --input photo.jpg --cols 3 --rows 2\n\n", bin);
+    printf("  Print-ready A4 with crop marks:\n");
+    printf("    %s --input photo.jpg --output sheet.jpg \\\n", bin);
+    printf("        --cols 6 --rows 2 --width 3.5 --height 3.0 \\\n");
+    printf("        --bleed 10 --crop-mark 25 --crop-offset 8\n\n");
+    printf("  PDF export:\n");
+    printf("    %s --input photo.jpg --output sheet.pdf --dpi 300\n\n", bin);
 }
 
-// I want this.
-// static void print_usage() {
-//     printf("\nIMGENGINE CLI\n");
-//     printf("Professional Photo Layout & Print Pipeline\n");
-//     printf("------------------------------------------------------------\n\n");
-//     printf("USAGE:\n  imgengine_cli --input <file> [--output <file>] [OPTIONS]\n\n");
-//     printf("REQUIRED:\n  --input <file>         Input image (jpg/png)\n\n");
-//     printf("LAYOUT OPTIONS:\n");
-//     printf("  --cols <int>           Number of columns (default: %d)\n", DEFAULT_COLS);
-//     printf("  --rows <int>           Number of rows (default: %d)\n", DEFAULT_ROWS);
-//     printf("  --gap <px>             Gap between photos (default: %d)\n", DEFAULT_GAP);
-//     printf("  --padding <px>         Page margin (default: %d)\n", DEFAULT_PADDING);
-//     printf("\nPRINT FEATURES:\n");
-//     printf("  --bleed <px>           Edge bleed (default: %d)\n", DEFAULT_BLEED);
-//     printf("  --crop-mark <px>       Mark length (default: %d)\n", DEFAULT_CROP_MARK);
-//     printf("  --crop-offset <px>     Distance from edge (default: %d)\n", DEFAULT_CROP_OFFSET);
-
-//     printf("PHOTO SETTINGS:\n");
-//     printf("  --width <cm>           Photo width in cm (default: %.1f)\n", DEFAULT_W_CM);
-//     printf("  --height <cm>          Photo height in cm (default: %.1f)\n", DEFAULT_H_CM);
-//     printf("  --dpi <int>            Print DPI (default: %d)\n", DEFAULT_DPI);
-//     printf("  --border <px>          Border thickness (default: %d)\n", DEFAULT_BORDER);
-//     printf("\n");
-
-//     printf("\nEXAMPLES:\n");
-//     printf(
-//         "  ./imgengine_cli --input ../input.jpg --output final_output.png --cols 6 --rows 2 --gap 
-//         15 --width 3.5 --height 3.0 --padding 20 --bleed 10 --crop-mark 25 --crop-offset 8 \n\n");
+// void img_print_usage(const char *bin)
+// {
+//     printf("Usage:\n");
+//     printf("  %s -i input.jpg -o output.jpg [options]\n\n", bin);
+//     printf("Options:\n");
+//     printf("  -w --width <n>\n");
+//     printf("  -h --height <n>\n");
+//     printf("  -t --threads <n>\n");
+//     printf("  -b --bench\n");
+//     printf("  -v --verbose\n");
 // }

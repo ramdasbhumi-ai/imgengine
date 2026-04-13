@@ -1,3 +1,4 @@
+// ./src/io/encoder/pdf_encoder.c
 // src/io/encoder/pdf_encoder.c
 
 // PDF encoder — JPEG-compressed image inside a PDF 1.4 container.

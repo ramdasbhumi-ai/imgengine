@@ -1,3 +1,4 @@
+// ./src/pipeline/crop_marks.c
 // src/pipeline/crop_marks.c
 //
 // FIX: Crop marks were drawing ON the photos because the mark

@@ -1,3 +1,4 @@
+// ./include/pipeline/canvas.h
 // include/pipeline/canvas.h
 
 // Canvas = the A4 output buffer. Allocated from slab.

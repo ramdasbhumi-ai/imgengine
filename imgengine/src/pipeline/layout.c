@@ -1,3 +1,4 @@
+// ./src/pipeline/layout.c
 // src/pipeline/layout.c
 //
 // FIX: Gap was computed in cell step but photos were resized to

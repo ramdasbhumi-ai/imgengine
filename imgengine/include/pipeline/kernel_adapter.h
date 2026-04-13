@@ -1,3 +1,4 @@
+// ./include/pipeline/kernel_adapter.h
 
 // FILE: include/pipeline/kernel_adapter.h  (REPLACE)
 

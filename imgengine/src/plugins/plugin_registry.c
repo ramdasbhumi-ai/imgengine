@@ -1,7 +1,5 @@
 // ./src/plugins/plugin_registry.c
 
-// ./src/plugins/plugin_registry.c
-
 #include "api/v1/img_plugin_api.h"
 #include "pipeline/jump_table.h"
 #include <stdio.h>

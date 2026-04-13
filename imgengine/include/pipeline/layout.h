@@ -1,3 +1,4 @@
+// ./include/pipeline/layout.h
 // include/pipeline/layout.h
 
 // Grid layout engine — places resized photos on canvas.

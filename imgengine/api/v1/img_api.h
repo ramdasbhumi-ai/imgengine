@@ -1,3 +1,4 @@
+// ./api/v1/img_api.h
 
 // api/v1/img_api.h
 
@@ -78,48 +79,3 @@ extern "C"
 #endif
 
 #endif /* IMGENGINE_API_H */
-
-// // api/v1/img_api.h
-
-// #ifndef IMGENGINE_API_H
-// #define IMGENGINE_API_H
-
-// #include <stdint.h>
-// #include <stddef.h>
-// #include "api/v1/img_error.h"
-
-// #ifdef __cplusplus
-// extern "C"
-// {
-// #endif
-
-//     typedef struct img_engine img_engine_t;
-//     typedef struct img_buffer img_buffer_t;
-//     typedef struct img_pipeline img_pipeline_t;
-
-//     img_engine_t *img_api_init(uint32_t workers);
-//     void img_api_shutdown(img_engine_t *engine);
-
-//     /*
-//      * img_api_process_raw()
-//      *
-//      * Decode input bytes → process → encode to output bytes.
-//      * Caller must free *output with img_encoded_free() on success.
-//      *
-//      * Returns IMG_SUCCESS (0) on success.
-//      * Returns IMG_ERR_* on failure — never returns raw -1.
-//      */
-//     img_result_t img_api_process_raw(
-//         img_engine_t *engine,
-//         uint8_t *input,
-//         size_t input_size,
-//         uint8_t **output,
-//         size_t *output_size);
-
-//     void img_encoded_free(uint8_t *ptr);
-
-// #ifdef __cplusplus
-// }
-// #endif
-
-// #endif /* IMGENGINE_API_H */

@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🔍 Running L8 Include Guard Checker..."
+echo "🔍 Running L10 Include Guard Checker..."
 
 FAIL=0
 

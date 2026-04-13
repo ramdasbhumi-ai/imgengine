@@ -1,3 +1,4 @@
+// ./src/observability/binlog.c
 // src/observability/binlog.c
 //
 // _GNU_SOURCE MUST be the first line before any #include.

@@ -58,7 +58,7 @@ set(IMGENGINE_COMMON_FLAGS
 )
 
 if(IMGENGINE_LTO)
-    list(APPEND IMGENGINE_COMMON_FLAGS -flto)
+    list(APPEND IMGENGINE_COMMON_FLAGS -flto -Werror)
     # list(APPEND IMGENGINE_COMMON_FLAGS -flto -Werror) This line must be uncommented in future
     set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -flto")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
@@ -138,6 +138,7 @@ set(SOURCES_PIPELINE
     src/pipeline/jump_table.c
     src/pipeline/pipeline_build.c
     src/pipeline/pipeline_fuse.c
+    src/pipeline/border.c
 )
 
 set(SOURCES_MEMORY
@@ -258,6 +259,7 @@ target_compile_options(plugin_resize PRIVATE ${IMGENGINE_COMMON_FLAGS})
 add_executable(imgengine_cli
     src/cmd/imgengine/main.c
     src/cmd/imgengine/args.c
+    src/cmd/imgengine/job_builder.c
     src/cmd/imgengine/io_uring_engine.c
 )
 target_include_directories(imgengine_cli PRIVATE ${IMGENGINE_INCLUDES})

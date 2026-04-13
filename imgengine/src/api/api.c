@@ -64,7 +64,12 @@ static img_worker_t g_workers[64];
 // ================================================================
 
 /* forward declarations for pipeline stages */
+// img_result_t img_apply_bleed(img_buffer_t *, const img_layout_t *, uint32_t);
+// img_result_t img_draw_crop_marks(img_buffer_t *, const img_layout_t *, const img_job_t *);
+
+/* NEW — correct 3-arg signature */
 img_result_t img_apply_bleed(img_buffer_t *, const img_layout_t *, uint32_t);
+img_result_t img_draw_borders(img_buffer_t *, const img_layout_t *, uint32_t);
 img_result_t img_draw_crop_marks(img_buffer_t *, const img_layout_t *, const img_job_t *);
 
 /*
@@ -218,6 +223,20 @@ img_result_t img_api_run_job(
         img_canvas_free(&canvas, engine->global_pool);
         img_arena_destroy(arena);
         return r;
+    }
+
+    /* 11. Border — drawn AFTER bleed, AFTER crop marks */
+    /*     Border is inside the photo so it draws on top of bleed */
+    if (job->border_px > 0)
+    {
+        r = img_draw_borders(&canvas.buf, &layout, job->border_px);
+        if (r != IMG_SUCCESS)
+        {
+            fprintf(stderr, "[JOB] border failed: %s\n", img_result_name(r));
+            img_canvas_free(&canvas, engine->global_pool);
+            img_arena_destroy(arena);
+            return r;
+        }
     }
 
     /* ── 9. Bleed ── */

@@ -1,3 +1,4 @@
+// ./src/pipeline/canvas.c
 // src/pipeline/canvas.c
 
 #define _GNU_SOURCE

@@ -1,6 +1,5 @@
 // ./api/v1/img_plugin_api.h
 
-// api/v1/img_plugin_abi.h
 
 #ifndef IMGENGINE_PLUGIN_API_H
 #define IMGENGINE_PLUGIN_API_H

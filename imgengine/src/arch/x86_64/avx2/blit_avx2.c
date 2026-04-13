@@ -1,3 +1,4 @@
+// ./src/arch/x86_64/avx2/blit_avx2.c
 // src/arch/x86_64/avx2/blit_avx2.c
 
 // AVX2 blit: copy img_buffer_t onto canvas at (x, y).

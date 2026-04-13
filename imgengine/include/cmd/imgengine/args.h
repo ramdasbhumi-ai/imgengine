@@ -11,13 +11,28 @@ typedef struct
     const char *input_path;
     const char *output_path;
 
-    uint32_t width;
-    uint32_t height;
+    /* layout */
+    uint32_t cols;
+    uint32_t rows;
+    uint32_t gap;
+    uint32_t padding;
 
+    /* photo */
+    float photo_w_cm;
+    float photo_h_cm;
+    uint32_t dpi;
+    uint32_t border;
+
+    /* print */
+    uint32_t bleed;
+    uint32_t crop_mark;
+    uint32_t crop_thickness;
+    uint32_t crop_offset;
+
+    /* runtime */
     uint32_t threads;
 
     bool verbose;
-    bool bench_mode;
 
 } img_cli_options_t;
 
