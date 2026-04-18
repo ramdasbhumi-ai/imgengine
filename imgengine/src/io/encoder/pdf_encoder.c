@@ -5,7 +5,7 @@
 // Ported from pdf_plugin.c, upgraded: JPEG-compressed stream.
 
 #include "core/buffer.h"
-#include "api/v1/img_error.h"
+#include "core/result.h"
 #include <turbojpeg.h>
 #include <stdio.h>
 #include <stdlib.h>

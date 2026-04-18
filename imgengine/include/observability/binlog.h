@@ -50,6 +50,7 @@ typedef struct
 /*
  * 🔥 API
  */
+void img_binlog_set_cpu(uint32_t cpu);
 int img_binlog_init(img_binlog_t *log, uint32_t cpu_count, uint32_t power);
 void img_binlog_destroy(img_binlog_t *log);
 

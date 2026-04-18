@@ -1,3 +1,4 @@
+// ./src/io/io_register.c
 // src/io/io_register.c  (NEW FILE)
 
 // ================================================================
@@ -7,11 +8,10 @@
 
 #define _GNU_SOURCE
 
-#include "api/io_vtable.h"
+#include "io/io_vtable.h"
 #include "io/decoder/decoder_entry.h"
 #include "io/encoder/encoder_entry.h"
 #include "io/encoder/pdf_encoder.h"
-#include "core/result.h"
 
 img_io_vtable_t g_io_vtable = {0};
 

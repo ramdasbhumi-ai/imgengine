@@ -2,7 +2,7 @@
 
 // src/core/buffer_lifecycle.c
 
-#include "runtime/buffer_lifecycle.h"
+#include "core/buffer_lifecycle.h"
 #include "core/buffer.h"
 
 void img_buffer_acquire(img_buffer_t *buf)

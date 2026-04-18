@@ -5,7 +5,7 @@
 #ifndef IMGENGINE_KERNEL_ADAPTER_H
 #define IMGENGINE_KERNEL_ADAPTER_H
 
-#include "api/v1/img_plugin_api.h"
+#include "pipeline/plugin_abi.h"
 
 /*
  * KERNEL ABI — unified 3-arg signature

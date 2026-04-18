@@ -1,3 +1,4 @@
+// ./include/pipeline/plugin_abi.h
 //  include/pipeline/plugin_abi.h  (NEW FILE)
 
 #ifndef IMGENGINE_PIPELINE_PLUGIN_ABI_H

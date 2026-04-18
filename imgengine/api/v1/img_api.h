@@ -1,7 +1,5 @@
 // ./api/v1/img_api.h
 
-// api/v1/img_api.h
-
 #ifndef IMGENGINE_API_H
 #define IMGENGINE_API_H
 
@@ -57,6 +55,22 @@ extern "C"
         const char *input_path,
         const char *output_path,
         const img_job_t *job);
+
+    /*
+     * img_api_run_job_raw()
+     *
+     * Same render pipeline as img_api_run_job(), but returns the encoded
+     * raster bytes in memory instead of writing them to disk. The caller
+     * frees *output with img_encoded_free().
+     *
+     * Intended for bindings and async file writers such as io_uring.
+     */
+    img_result_t img_api_run_job_raw(
+        img_engine_t *engine,
+        const char *input_path,
+        const img_job_t *job,
+        uint8_t **output,
+        size_t *output_size);
 
     /*
      * img_api_process_raw()

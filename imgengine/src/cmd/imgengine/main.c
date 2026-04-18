@@ -1,10 +1,14 @@
+// ./src/cmd/imgengine/main.c
 // src/cmd/imgengine/main.c
 
 #define _GNU_SOURCE
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cmd/imgengine/args.h"
 #include "cmd/imgengine/job_builder.h"
@@ -13,14 +17,54 @@
 #include "api/v1/img_api.h"
 #include "api/v1/img_error.h"
 
+int is_pdf_output(const char *path);
+
+static img_result_t write_buffer_blocking(
+    const char *path,
+    const uint8_t *buf,
+    size_t size)
+{
+    if (!path || !buf)
+        return IMG_ERR_SECURITY;
+
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0)
+        return IMG_ERR_IO;
+
+    size_t written = 0;
+    while (written < size)
+    {
+        ssize_t rc = write(fd, buf + written, size - written);
+        if (rc < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            close(fd);
+            return IMG_ERR_IO;
+        }
+        if (rc == 0)
+        {
+            close(fd);
+            return IMG_ERR_IO;
+        }
+        written += (size_t)rc;
+    }
+
+    if (close(fd) != 0)
+        return IMG_ERR_IO;
+
+    return IMG_SUCCESS;
+}
+
 int main(int argc, char **argv)
 {
-    img_cli_options_t opts;
+    img_cli_options_t opts = {0};
 
-    if (img_parse_args(argc, argv, &opts) != 0)
+    int parse_rc = img_parse_args(argc, argv, &opts);
+    if (parse_rc != 0)
     {
         img_print_usage(argv[0]);
-        return 1;
+        return (parse_rc > 0 || opts.help) ? 0 : 1;
     }
 
     img_job_t job;
@@ -47,7 +91,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (opts.verbose)
+    if (opts.verbose && !opts.quiet)
     {
         printf("imgengine | %ux%u grid | %.1fx%.1f cm | %u dpi | io_uring=%s\n",
                job.cols, job.rows,
@@ -58,24 +102,44 @@ int main(int argc, char **argv)
         printf("output: %s\n", opts.output_path);
     }
 
-    /*
-     * Run job.
-     * img_api_run_job() handles decode (mmap), pipeline, encode internally.
-     * Output is written to output_path via standard write.
-     *
-     * io_uring async write: wire here when img_api_run_job_raw() is available
-     * (returns raw bytes instead of writing directly). Current architecture
-     * writes internally — io_uring write replaces that in the next sprint.
-     */
-    img_result_t r = img_api_run_job(
-        engine,
-        opts.input_path,
-        opts.output_path,
-        &job);
+    img_result_t r;
+
+    if (is_pdf_output(opts.output_path))
+    {
+        r = img_api_run_job(
+            engine,
+            opts.input_path,
+            opts.output_path,
+            &job);
+    }
+    else
+    {
+        uint8_t *out = NULL;
+        size_t out_size = 0;
+
+        r = img_api_run_job_raw(
+            engine,
+            opts.input_path,
+            &job,
+            &out,
+            &out_size);
+
+        if (r == IMG_SUCCESS)
+        {
+            if (uring_ok)
+                r = (img_io_uring_write_file(&uring, opts.output_path, out, out_size) == 0)
+                        ? IMG_SUCCESS
+                        : IMG_ERR_IO;
+            else
+                r = write_buffer_blocking(opts.output_path, out, out_size);
+        }
+
+        img_encoded_free(out);
+    }
 
     if (r != IMG_SUCCESS)
         fprintf(stderr, "job failed: %s (%d)\n", img_result_name(r), r);
-    else
+    else if (!opts.quiet)
         printf("done: %s\n", opts.output_path);
 
     img_api_shutdown(engine);

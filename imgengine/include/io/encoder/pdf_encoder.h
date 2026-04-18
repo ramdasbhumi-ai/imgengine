@@ -8,7 +8,7 @@
 #define IMGENGINE_PDF_ENCODER_H
 
 #include "core/buffer.h"
-#include "api/v1/img_error.h"
+#include "core/result.h"
 #include <stdint.h>
 
 img_result_t img_encode_pdf(

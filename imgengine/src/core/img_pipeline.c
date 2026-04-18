@@ -1,11 +1,11 @@
+// ./src/core/img_pipeline.c
 
 // src/core/img_pipeline.c fix:
 // FILE: src/core/img_pipeline.c  (UPDATE)
 
 #define _GNU_SOURCE
 
-#include "pipeline/pipeline_types.h"
-#include "pipeline/pipeline_compiled.h"
+#include "core/pipeline_types.h"
 #include <stddef.h>
 #include <stdlib.h>
 

@@ -8,7 +8,7 @@
 
 #include <turbojpeg.h>
 #include "core/buffer.h"
-#include "api/v1/img_error.h"
+#include "core/result.h"
 #include <stddef.h>
 
 static inline img_result_t img_encode_jpeg(

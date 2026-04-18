@@ -1,3 +1,4 @@
+// ./include/pipeline/dispatch.h
 // include/pipeline/dispatch.h  (NEW FILE)
 
 #ifndef IMGENGINE_PIPELINE_DISPATCH_H

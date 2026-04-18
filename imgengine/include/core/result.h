@@ -1,3 +1,4 @@
+// ./include/core/result.h
 // include/core/result.h
 
 #ifndef IMGENGINE_CORE_RESULT_H

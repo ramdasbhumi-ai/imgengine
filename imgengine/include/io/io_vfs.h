@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "api/v1/img_error.h"
+#include "core/result.h"
 
 /*
  * 🔥 REAL STRUCT NAME (MATCH FORWARD DECL)

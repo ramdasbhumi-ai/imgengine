@@ -104,11 +104,11 @@ def is_system_fn(name):
 # ]
 
 LAYERS = [
-    "core",           # 0 — types, buffer, opcodes, batch
-    "memory",         # 1 — slab, arena, numa
+    "memory",         # 0 — slab, arena, numa
+    "core",           # 1 — types, buffer, opcodes, batch
     "arch",           # 2 — SIMD kernels, cpu_caps, resize_params
     "security",       # 3 — validation, sandbox
-    "observability",  # 4 — metrics, logging, tracing (moved up)
+    "observability",  # 4 — metrics, logging, tracing
     "pipeline",       # 5 — jump table, fused kernels, dispatch, job
     "runtime",        # 6 — workers, queues, scheduler
     "plugins",        # 7 — plugin ABI (pipeline/plugin_abi.h)
@@ -173,6 +173,13 @@ class StaticAnalyzer:
         self.fn_call = re.compile(r"\b(\w+)\s*\(")
         self.include = re.compile(r'#include\s+"([^"]+)"')
 
+    @staticmethod
+    def strip_comments(content):
+        # Keep the analyzer focused on real dependencies, not commented examples.
+        content = re.sub(r"/\*.*?\*/", "", content, flags=re.S)
+        content = re.sub(r"//.*", "", content)
+        return content
+
     def get_layer(self, path):
         rel = os.path.relpath(path, ".")
         for root in ("src", "include", "api"):
@@ -194,6 +201,7 @@ class StaticAnalyzer:
         except Exception:
             return
 
+        content = self.strip_comments(content)
         layer = self.get_layer(path)
 
         # Extract includes

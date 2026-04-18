@@ -1,3 +1,4 @@
+// ./include/core/batch.h
 // include/core/batch.h  (NEW FILE — move from pipeline/batch.h)
 
 #ifndef IMGENGINE_CORE_BATCH_H

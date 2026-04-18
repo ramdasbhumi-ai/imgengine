@@ -1,10 +1,8 @@
 // ./src/io/decoder/stb_bridge.c
 
-// ./src/io/decoder/stb_bridge.c
-
 #include "core/context_internal.h"
-#include "api/v1/img_error.h"
-#include "api/v1/img_buffer_utils.h"
+#include "core/result.h"
+#include "core/buffer.h"
 #include "memory/slab.h"
 #include "src/third_party/stb/stb_image.h"
 #include <string.h>

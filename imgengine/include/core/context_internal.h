@@ -1,12 +1,12 @@
 // ./include/core/context_internal.h
 
-/* include/core/context_internal.h */
+
 
 #ifndef IMGENGINE_CONTEXT_INTERNAL_H
 #define IMGENGINE_CONTEXT_INTERNAL_H
 
 #include <stdint.h>
-#include "arch/cpu_caps.h"
+#include "core/cpu_caps.h"
 // #include "runtime/worker.h"
 typedef struct img_worker img_worker_t;
 

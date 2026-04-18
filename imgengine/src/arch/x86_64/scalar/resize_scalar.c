@@ -4,7 +4,6 @@
 #include "core/buffer.h"
 // #include "plugins/plugin_resize.h"
 #include "arch/resize_params.h"
-#include "pipeline/kernel_adapter.h"
 
 #include <string.h>
 

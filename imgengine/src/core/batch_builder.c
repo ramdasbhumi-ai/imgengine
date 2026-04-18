@@ -1,9 +1,10 @@
+// ./src/core/batch_builder.c
 // src/core/batch_builder.c  (UPDATE)
 // Remove pipeline/batch_exec.h — use forward decls only
 
 #define _GNU_SOURCE
 
-#include "pipeline/batch.h" /* img_batch_t definition */
+#include "core/batch.h"
 #include "memory/arena.h"
 #include "core/context_internal.h"
 

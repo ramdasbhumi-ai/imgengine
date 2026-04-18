@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "pipeline/job.h"
 
 typedef struct
 {
@@ -13,26 +14,44 @@ typedef struct
 
     /* layout */
     uint32_t cols;
+    bool has_cols;
     uint32_t rows;
+    bool has_rows;
     uint32_t gap;
+    bool has_gap;
     uint32_t padding;
+    bool has_padding;
 
     /* photo */
     float photo_w_cm;
+    bool has_photo_w_cm;
     float photo_h_cm;
+    bool has_photo_h_cm;
     uint32_t dpi;
+    bool has_dpi;
     uint32_t border;
+    bool has_border;
 
     /* print */
     uint32_t bleed;
+    bool has_bleed;
     uint32_t crop_mark;
+    bool has_crop_mark;
     uint32_t crop_thickness;
+    bool has_crop_thickness;
     uint32_t crop_offset;
+    bool has_crop_offset;
 
     /* runtime */
     uint32_t threads;
+    bool has_threads;
+
+    img_scale_mode_t mode;
+    bool mode_set;
 
     bool verbose;
+    bool quiet;
+    bool help;
 
 } img_cli_options_t;
 
