@@ -78,6 +78,15 @@ img_result_t img_api_begin_job(
     img_layout_t *layout,
     img_arena_t **arena);
 
+img_result_t img_api_begin_job_with_photo(
+    img_engine_t *engine,
+    const img_job_t *job,
+    const img_buffer_t *photo,
+    img_ctx_t *ctx,
+    img_canvas_t *canvas,
+    img_layout_t *layout,
+    img_arena_t **arena);
+
 img_result_t img_api_run_job_impl(
     img_engine_t *engine,
     const char *input_path,
@@ -87,6 +96,27 @@ img_result_t img_api_run_job_impl(
 img_result_t img_api_run_job_raw_impl(
     img_engine_t *engine,
     const char *input_path,
+    const img_job_t *job,
+    uint8_t **output,
+    size_t *output_size);
+
+img_result_t img_api_run_job_rgb24_impl(
+    img_engine_t *engine,
+    const uint8_t *input,
+    size_t input_size,
+    uint32_t width,
+    uint32_t height,
+    uint32_t stride,
+    const char *output_path,
+    const img_job_t *job);
+
+img_result_t img_api_run_job_rgb24_raw_impl(
+    img_engine_t *engine,
+    const uint8_t *input,
+    size_t input_size,
+    uint32_t width,
+    uint32_t height,
+    uint32_t stride,
     const img_job_t *job,
     uint8_t **output,
     size_t *output_size);

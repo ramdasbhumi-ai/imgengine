@@ -23,6 +23,13 @@ img_result_t img_canvas_init(
     if (r != IMG_SUCCESS)
         return r;
 
+    const uint32_t bg_signature = ((uint32_t)job->bg_r << 16) |
+                                  ((uint32_t)job->bg_g << 8) |
+                                  (uint32_t)job->bg_b;
+
+    if (canvas->initialized && canvas->bg_signature == bg_signature)
+        return IMG_SUCCESS;
+
     img_canvas_fill_background(canvas, job);
     return IMG_SUCCESS;
 }

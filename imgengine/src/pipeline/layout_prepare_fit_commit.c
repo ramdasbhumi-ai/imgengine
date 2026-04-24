@@ -48,6 +48,7 @@ img_result_t img_layout_prepare_fit_commit(
     }
 
     dst->data = mem;
+    dst->owner_pool = pool;
     dst->width = cell_w;
     dst->height = cell_h;
     dst->channels = 3;

@@ -32,8 +32,31 @@ img_result_t img_api_hot_bench_init_with_template(
     r = img_runtime_hot_bench_init(engine, &decoded, preset_template, state);
     if (r != IMG_SUCCESS)
         img_runtime_release_raw_buffer(engine, &decoded);
+    else
+        state->owns_decoded = 1;
 
     return r;
+}
+
+img_result_t img_api_hot_bench_init_rgb24_with_template(
+    img_engine_t *engine,
+    const uint8_t *input,
+    uint32_t width,
+    uint32_t height,
+    uint32_t stride,
+    img_job_template_t preset_template,
+    img_hot_bench_state_t *state)
+{
+    img_buffer_t decoded = {
+        .data = (uint8_t *)input,
+        .owner_pool = NULL,
+        .width = width,
+        .height = height,
+        .channels = 3,
+        .stride = stride,
+    };
+
+    return img_runtime_hot_bench_init(engine, &decoded, preset_template, state);
 }
 
 img_result_t img_api_hot_bench_step(

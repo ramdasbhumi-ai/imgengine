@@ -6,16 +6,28 @@
 
 #include "core/buffer.h"
 
-int img_encode_from_buffer(
+static _Thread_local tjhandle g_tj_encoder = NULL;
+
+static tjhandle img_get_thread_encoder(void)
+{
+    if (!g_tj_encoder)
+        g_tj_encoder = tjInitCompress();
+
+    return g_tj_encoder;
+}
+
+int img_encode_from_buffer_ex(
     img_ctx_t *ctx,
     img_buffer_t *buf,
     uint8_t **out_data,
-    size_t *out_size)
+    size_t *out_size,
+    int quality,
+    int subsamp)
 {
     if (!ctx || !buf || !out_data || !out_size)
         return -1;
 
-    tjhandle tj = tjInitCompress();
+    tjhandle tj = img_get_thread_encoder();
     if (!tj)
         return -1;
 
@@ -31,11 +43,10 @@ int img_encode_from_buffer(
             TJPF_RGB,
             &jpegBuf,
             &jpegSize,
-            TJSAMP_444,
-            85,
+            subsamp,
+            quality,
             TJFLAG_FASTDCT) != 0)
     {
-        tjDestroy(tj);
         return -1;
     }
 
@@ -43,6 +54,20 @@ int img_encode_from_buffer(
     *out_data = jpegBuf;
     *out_size = jpegSize;
 
-    tjDestroy(tj);
     return 0;
+}
+
+int img_encode_from_buffer(
+    img_ctx_t *ctx,
+    img_buffer_t *buf,
+    uint8_t **out_data,
+    size_t *out_size)
+{
+    return img_encode_from_buffer_ex(
+        ctx,
+        buf,
+        out_data,
+        out_size,
+        85,
+        TJSAMP_444);
 }

@@ -16,6 +16,13 @@ typedef struct img_buffer img_buffer_t;
 /**
  * Encode img_buffer into output bytes
  */
+int img_encode_from_buffer_ex(img_ctx_t *ctx,
+                              img_buffer_t *buf,
+                              uint8_t **out_data,
+                              size_t *out_size,
+                              int quality,
+                              int subsamp);
+
 int img_encode_from_buffer(img_ctx_t *ctx,
                            img_buffer_t *buf,
                            uint8_t **out_data,

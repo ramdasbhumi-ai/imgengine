@@ -36,7 +36,7 @@ else()
 endif()
 
 # ── Feature flags ──────────────────────────────────────────
-option(IMGENGINE_SANITIZE   "Enable ASAN + UBSAN"          ON)
+option(IMGENGINE_SANITIZE   "Enable ASAN + UBSAN"          OFF)
 option(IMGENGINE_LTO        "Enable link-time optimization" ON)
 option(IMGENGINE_SANDBOX    "Enable seccomp sandbox"        OFF)
 option(IMGENGINE_BENCH      "Build latency benchmark"       ON)
@@ -157,6 +157,7 @@ set(SOURCES_API
     src/api/api_job_finish_output_pdf.c
     src/api/api_job_postfx.c
     src/api/api_job_render_output.c
+    src/api/api_job_run_rgb24.c
     src/api/api_job_write_buffer.c
     src/api/api_job_run.c
     src/api/api_job_run_raw.c
@@ -308,6 +309,7 @@ set(SOURCES_RUNTIME
     src/runtime/job_prepare_render_stage.c
     src/runtime/job_run_compiled_pipeline.c
     src/runtime/raw_buffer_release.c
+    src/runtime/template_registry.c
     src/runtime/worker.c
     src/runtime/worker_control.c
     src/runtime/worker_init.c
@@ -447,6 +449,7 @@ add_executable(imgengine_cli
     src/cmd/imgengine/args_parse.c
     src/cmd/imgengine/args_parse_options.c
     src/cmd/imgengine/args_parse_options_io.c
+    src/cmd/imgengine/args_parse_options_input.c
     src/cmd/imgengine/args_parse_options_layout.c
     src/cmd/imgengine/args_parse_options_photo.c
     src/cmd/imgengine/args_parse_options_print.c
@@ -455,6 +458,7 @@ add_executable(imgengine_cli
     src/cmd/imgengine/args_usage_examples.c
     src/cmd/imgengine/args_usage_layout.c
     src/cmd/imgengine/args_usage_options.c
+    src/cmd/imgengine/args_usage_options_input.c
     src/cmd/imgengine/args_usage_options_layout.c
     src/cmd/imgengine/args_usage_options_photo.c
     src/cmd/imgengine/args_usage_options_print.c
@@ -482,6 +486,14 @@ if(IMGENGINE_BENCH)
     target_link_libraries(bench_lat PRIVATE imgengine)
     if(IMGENGINE_SANITIZE)
         target_link_libraries(bench_lat PRIVATE -fsanitize=address,undefined)
+    endif()
+
+    add_executable(imgengine_cli_bench src/cmd/bench/cli_bench.c)
+    target_include_directories(imgengine_cli_bench PRIVATE ${IMGENGINE_INCLUDES})
+    target_compile_options(imgengine_cli_bench PRIVATE ${IMGENGINE_COMMON_FLAGS})
+    target_link_libraries(imgengine_cli_bench PRIVATE imgengine Threads::Threads)
+    if(IMGENGINE_SANITIZE)
+        target_link_libraries(imgengine_cli_bench PRIVATE -fsanitize=address,undefined)
     endif()
 endif()
 

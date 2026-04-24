@@ -16,6 +16,7 @@ typedef struct
 {
     img_engine_t *engine;
     img_buffer_t decoded;
+    uint8_t owns_decoded;
     img_job_t job;
     img_ctx_t ctx;
     img_canvas_t canvas;

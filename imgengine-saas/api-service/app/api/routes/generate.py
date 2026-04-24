@@ -12,6 +12,7 @@ from app.models.job import Job
 from app.core.celery_client import celery
 from app.core.security import verify_api_key
 from app.core.limiter import limiter
+from app.core.config import API_GENERATE_RATE_LIMIT
 
 from app.core.logger import logger
 
@@ -27,7 +28,7 @@ def get_db():
         db.close()
 
 
-@limiter.limit("5/minute")
+@limiter.limit(API_GENERATE_RATE_LIMIT)
 @router.post("/generate", dependencies=[Depends(verify_api_key)])
 def generate(
     request: Request, file: UploadFile = File(...), db: Session = Depends(get_db)

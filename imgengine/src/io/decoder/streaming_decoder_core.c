@@ -104,6 +104,7 @@ int img_decode_stream_core(
     }
 
     out->data = mem;
+    out->owner_pool = pool;
     out->width = (uint32_t)w;
     out->height = (uint32_t)h;
     out->channels = 3;

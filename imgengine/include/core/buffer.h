@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdatomic.h>
 
+typedef struct img_slab_pool img_slab_pool_t;
+
 /*
  * 🔥 Metadata (placed BEFORE data pointer)
  */
@@ -21,6 +23,7 @@ typedef struct
 typedef struct img_buffer
 {
     uint8_t *data;
+    img_slab_pool_t *owner_pool;
 
     uint32_t width;
     uint32_t height;

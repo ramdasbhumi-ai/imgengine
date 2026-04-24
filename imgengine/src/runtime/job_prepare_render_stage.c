@@ -44,7 +44,8 @@ img_result_t img_runtime_prepare_render_stage(
     uint32_t render_sig =
         img_render_cache_signature(photo, job, probe.photo_w_px, probe.photo_h_px);
 
-    if (cache && cache->final_valid &&
+    if (cache && cache->allow_final_cache &&
+        cache->final_valid &&
         cache->photo == photo &&
         cache->cell_w == probe.photo_w_px &&
         cache->cell_h == probe.photo_h_px &&
@@ -82,7 +83,7 @@ img_result_t img_runtime_prepare_render_stage(
         *arena,
         engine->global_pool);
 
-    if (r == IMG_SUCCESS && cache)
+    if (r == IMG_SUCCESS && cache && cache->allow_final_cache)
     {
         size_t canvas_bytes = (size_t)canvas->buf.stride * canvas->buf.height;
         size_t layout_bytes = (size_t)layout->count * sizeof(img_cell_t);

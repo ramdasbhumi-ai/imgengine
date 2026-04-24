@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "cmd/imgengine/args.h"
@@ -17,6 +19,43 @@
 #include "api/v1/img_error.h"
 
 int is_pdf_output(const char *path);
+
+static img_result_t map_readonly_file(
+    const char *path,
+    const uint8_t **data,
+    size_t *size)
+{
+    if (!path || !data || !size)
+        return IMG_ERR_SECURITY;
+
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return IMG_ERR_IO;
+
+    struct stat st;
+    if (fstat(fd, &st) != 0 || st.st_size <= 0)
+    {
+        close(fd);
+        return IMG_ERR_IO;
+    }
+
+    void *ptr = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (ptr == MAP_FAILED)
+        return IMG_ERR_IO;
+
+    *data = (const uint8_t *)ptr;
+    *size = (size_t)st.st_size;
+    return IMG_SUCCESS;
+}
+
+static void unmap_readonly_file(
+    const uint8_t *data,
+    size_t size)
+{
+    if (data && size > 0)
+        munmap((void *)data, size);
+}
 
 static img_result_t write_buffer_blocking(
     const char *path,
@@ -66,10 +105,18 @@ int main(int argc, char **argv)
         return (parse_rc > 0 || opts.help) ? 0 : 1;
     }
 
+    img_engine_t *engine = img_api_init(opts.threads);
+    if (!engine)
+    {
+        fprintf(stderr, "engine init failed\n");
+        return 1;
+    }
+
     img_job_t job;
-    if (img_build_job(&opts, &job) != 0)
+    if (img_build_job(engine, &opts, &job) != 0)
     {
         fprintf(stderr, "job build failed\n");
+        img_api_shutdown(engine);
         return 1;
     }
 
@@ -80,15 +127,6 @@ int main(int argc, char **argv)
      */
     img_io_uring_t uring;
     int uring_ok = (img_io_uring_init(&uring, 64) == 0);
-
-    img_engine_t *engine = img_api_init(opts.threads);
-    if (!engine)
-    {
-        fprintf(stderr, "engine init failed\n");
-        if (uring_ok)
-            img_io_uring_destroy(&uring);
-        return 1;
-    }
 
     if (opts.verbose && !opts.quiet)
     {
@@ -103,7 +141,63 @@ int main(int argc, char **argv)
 
     img_result_t r;
 
-    if (is_pdf_output(opts.output_path))
+    if (opts.input_format == IMG_CLI_INPUT_FORMAT_RAW_RGB24)
+    {
+        const uint8_t *raw_input = NULL;
+        size_t raw_size = 0;
+
+        r = map_readonly_file(opts.input_path, &raw_input, &raw_size);
+        if (r == IMG_SUCCESS)
+        {
+            uint32_t stride = opts.has_input_stride
+                                  ? opts.input_stride
+                                  : (opts.input_width * 3U);
+
+            if (is_pdf_output(opts.output_path))
+            {
+                r = img_api_run_job_rgb24(
+                    engine,
+                    raw_input,
+                    raw_size,
+                    opts.input_width,
+                    opts.input_height,
+                    stride,
+                    opts.output_path,
+                    &job);
+            }
+            else
+            {
+                uint8_t *out = NULL;
+                size_t out_size = 0;
+
+                r = img_api_run_job_rgb24_raw(
+                    engine,
+                    raw_input,
+                    raw_size,
+                    opts.input_width,
+                    opts.input_height,
+                    stride,
+                    &job,
+                    &out,
+                    &out_size);
+
+                if (r == IMG_SUCCESS)
+                {
+                    if (uring_ok)
+                        r = (img_io_uring_write_file(&uring, opts.output_path, out, out_size) == 0)
+                                ? IMG_SUCCESS
+                                : IMG_ERR_IO;
+                    else
+                        r = write_buffer_blocking(opts.output_path, out, out_size);
+                }
+
+                img_encoded_free(out);
+            }
+
+            unmap_readonly_file(raw_input, raw_size);
+        }
+    }
+    else if (is_pdf_output(opts.output_path))
     {
         r = img_api_run_job(
             engine,

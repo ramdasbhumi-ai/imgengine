@@ -14,6 +14,16 @@
 
 #include "arch/arch_interface.h"
 
+static _Thread_local tjhandle g_tj_decoder = NULL;
+
+static tjhandle img_get_thread_decoder(void)
+{
+    if (!g_tj_decoder)
+        g_tj_decoder = tjInitDecompress();
+
+    return g_tj_decoder;
+}
+
 // ============================================================
 // 🔥 INTERNAL SAFE MULTIPLY (overflow guard)
 // ============================================================
@@ -57,7 +67,7 @@ int img_decode_to_buffer(
     // 🔥 2. INIT DECODER
     // ========================================================
 
-    tjhandle tj = tjInitDecompress();
+    tjhandle tj = img_get_thread_decoder();
     if (!tj)
         return IMG_ERR_NOMEM;
 
@@ -76,7 +86,6 @@ int img_decode_to_buffer(
             &subsamp,
             &cs) != 0)
     {
-        tjDestroy(tj);
         return IMG_ERR_FORMAT;
     }
 
@@ -91,7 +100,6 @@ int img_decode_to_buffer(
 
     if (sec != IMG_SUCCESS)
     {
-        tjDestroy(tj);
         return sec;
     }
 
@@ -106,13 +114,11 @@ int img_decode_to_buffer(
 
     if (!safe_mul((size_t)w, ch, &stride))
     {
-        tjDestroy(tj);
         return IMG_ERR_SECURITY;
     }
 
     if (!safe_mul(stride, (size_t)h, &required))
     {
-        tjDestroy(tj);
         return IMG_ERR_SECURITY;
     }
 
@@ -124,7 +130,6 @@ int img_decode_to_buffer(
 
     if (required > block)
     {
-        tjDestroy(tj);
         return IMG_ERR_NOMEM;
     }
 
@@ -134,10 +139,7 @@ int img_decode_to_buffer(
 
     uint8_t *mem = img_slab_alloc(ctx->local_pool);
     if (!mem)
-    {
-        tjDestroy(tj);
         return IMG_ERR_NOMEM;
-    }
 
     // ========================================================
     // 🔥 8. DECODE (CONTROLLED WRITE)
@@ -155,7 +157,6 @@ int img_decode_to_buffer(
             TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE) != 0)
     {
         img_slab_free(ctx->local_pool, mem);
-        tjDestroy(tj);
         return IMG_ERR_FORMAT;
     }
 
@@ -166,7 +167,6 @@ int img_decode_to_buffer(
     if (!img_bounds_check(mem, required, mem, block))
     {
         img_slab_free(ctx->local_pool, mem);
-        tjDestroy(tj);
         return IMG_ERR_SECURITY;
     }
 
@@ -175,11 +175,11 @@ int img_decode_to_buffer(
     // ========================================================
 
     out->data = mem;
+    out->owner_pool = ctx->local_pool;
     out->width = (uint32_t)w;
     out->height = (uint32_t)h;
     out->channels = (uint32_t)ch;
     out->stride = (uint32_t)stride;
 
-    tjDestroy(tj);
     return IMG_SUCCESS;
 }

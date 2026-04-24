@@ -34,6 +34,7 @@ img_result_t img_layout_prepare_fill_commit(
     uint32_t cy = (tmp->height - cell_h) / 2;
 
     dst->data = mem;
+    dst->owner_pool = pool;
     dst->width = cell_w;
     dst->height = cell_h;
     dst->channels = 3;

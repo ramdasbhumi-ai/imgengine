@@ -26,7 +26,8 @@ typedef struct img_render_cache
 
     uint8_t valid;
     uint8_t final_valid;
-    uint8_t _pad[3];
+    uint8_t allow_scaled_cache;
+    uint8_t allow_final_cache;
 } img_render_cache_t;
 
 static inline uint32_t img_render_cache_mix_u32(uint32_t sig, uint32_t v)
@@ -113,6 +114,9 @@ static inline void img_render_cache_discard(img_render_cache_t *cache)
     if (!cache)
         return;
 
+    const uint8_t allow_scaled_cache = cache->allow_scaled_cache;
+    const uint8_t allow_final_cache = cache->allow_final_cache;
+
     if (cache->valid && cache->pool && cache->scaled.data)
         img_slab_recycle(cache->pool, cache->scaled.data);
 
@@ -133,6 +137,8 @@ static inline void img_render_cache_discard(img_render_cache_t *cache)
     cache->layout_arena = NULL;
     cache->valid = 0;
     cache->final_valid = 0;
+    cache->allow_scaled_cache = allow_scaled_cache;
+    cache->allow_final_cache = allow_final_cache;
 }
 
 #endif /* IMGENGINE_PIPELINE_RENDER_CACHE_H */

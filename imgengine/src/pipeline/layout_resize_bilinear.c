@@ -25,6 +25,7 @@ img_result_t img_layout_resize_bilinear(
         return r;
 
     dst->data = mem;
+    dst->owner_pool = pool;
     dst->width = new_w;
     dst->height = new_h;
     dst->channels = 3;

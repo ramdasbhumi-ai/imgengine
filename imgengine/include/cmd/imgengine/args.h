@@ -7,10 +7,25 @@
 #include <stdbool.h>
 #include "pipeline/job.h"
 
+typedef enum
+{
+    IMG_CLI_INPUT_FORMAT_ENCODED = 0,
+    IMG_CLI_INPUT_FORMAT_RAW_RGB24 = 1,
+} img_cli_input_format_t;
+
 typedef struct
 {
     const char *input_path;
     const char *output_path;
+    img_cli_input_format_t input_format;
+
+    /* raw ingress */
+    uint32_t input_width;
+    bool has_input_width;
+    uint32_t input_height;
+    bool has_input_height;
+    uint32_t input_stride;
+    bool has_input_stride;
 
     /* layout */
     uint32_t cols;

@@ -29,6 +29,7 @@ img_result_t img_canvas_alloc_buffer(
         return IMG_ERR_NOMEM;
 
     canvas->buf.data = mem;
+    canvas->buf.owner_pool = pool;
     canvas->buf.width = pw;
     canvas->buf.height = ph;
     canvas->buf.channels = 3;

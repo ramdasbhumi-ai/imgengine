@@ -21,7 +21,8 @@ img_result_t img_layout_grid_prepare_scaled(
     img_render_cache_t *cache = ctx ? (img_render_cache_t *)ctx->op_params : NULL;
     uint32_t sig = img_render_cache_signature(photo, job, pw, ph);
 
-    if (cache && cache->valid &&
+    if (cache && cache->allow_scaled_cache &&
+        cache->valid &&
         cache->photo == photo &&
         cache->cell_w == pw &&
         cache->cell_h == ph &&
@@ -42,7 +43,7 @@ img_result_t img_layout_grid_prepare_scaled(
         if (r != IMG_SUCCESS)
             return r;
 
-        if (cache)
+        if (cache && cache->allow_scaled_cache)
         {
             if (cache->valid)
                 img_render_cache_discard(cache);
@@ -68,7 +69,7 @@ img_result_t img_layout_grid_prepare_scaled(
     if (r != IMG_SUCCESS)
         return r;
 
-    if (cache)
+    if (cache && cache->allow_scaled_cache)
     {
         if (cache->valid)
             img_render_cache_discard(cache);

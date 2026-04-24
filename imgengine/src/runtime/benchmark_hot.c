@@ -1,7 +1,6 @@
 #include "runtime/benchmark_hot.h"
 #include "runtime/job_exec.h"
-#include "runtime/scheduler.h"
-#include "runtime/task.h"
+#include "runtime/template_registry.h"
 
 #include <string.h>
 
@@ -17,6 +16,7 @@ img_result_t img_runtime_hot_bench_init(
     memset(state, 0, sizeof(*state));
     state->engine = engine;
     state->decoded = *decoded;
+    state->owns_decoded = 0;
 
     if (state->decoded.width == 0 || state->decoded.height == 0)
     {
@@ -25,20 +25,27 @@ img_result_t img_runtime_hot_bench_init(
     }
 
     img_ctx_bind_engine(engine, &state->ctx);
-    state->render_cache.pool = engine->global_pool;
-    /*
-     * Benchmark must measure the real render path, not the render-cache
-     * shortcut. Keep the cache object around for destruction symmetry,
-     * but do not wire it into ctx->op_params here.
-     */
-    state->ctx.op_params = NULL;
-    img_job_defaults(&state->job);
-    if (preset_template != IMG_JOB_TEMPLATE_CUSTOM)
+    state->arena = img_arena_create(1 * 1024 * 1024);
+    if (!state->arena)
     {
-        img_job_apply_template(&state->job, preset_template);
+        img_runtime_hot_bench_destroy(engine, state);
+        return IMG_ERR_NOMEM;
     }
-    else
+
+    state->ctx.scratch_arena = state->arena;
+    state->render_cache.pool = engine->global_pool;
+    state->render_cache.allow_scaled_cache = 1;
+    /*
+     * Keep scaled-cache reuse enabled, but disable the final canvas cache for
+     * benchmarking. Otherwise the prepared benchmark mostly measures a cache
+     * hit after warmup, which produces misleading sub-microsecond timings.
+     */
+    state->render_cache.allow_final_cache = 0;
+    state->ctx.op_params = &state->render_cache;
+    if (img_runtime_resolve_template_job(
+            engine, preset_template, &state->job) != IMG_SUCCESS)
     {
+        img_job_defaults(&state->job);
         state->job.cols = 6;
         state->job.rows = 3;
         state->job.gap = 20;
@@ -53,27 +60,6 @@ img_result_t img_runtime_hot_bench_step(
 {
     if (!state || !state->engine || !state->decoded.data)
         return IMG_ERR_SECURITY;
-
-    if (state->engine->scheduler && state->engine->worker_count > 0)
-    {
-        img_task_t task = {
-            .kind = IMG_TASK_KIND_RENDER_STAGE,
-            .state = IMG_TASK_READY,
-            .status = IMG_ERR_INTERNAL,
-            .payload.render = {
-                .engine = state->engine,
-                .ctx = &state->ctx,
-                .canvas = &state->canvas,
-                .layout = &state->layout,
-                .job = &state->job,
-                .photo = &state->decoded,
-                .arena = &state->arena,
-            },
-        };
-
-        if (img_runtime_submit_task(state->engine, &task) == 0)
-            return img_runtime_wait_task(&task);
-    }
 
     return img_runtime_prepare_render_stage(
         state->engine,
@@ -100,7 +86,7 @@ void img_runtime_hot_bench_destroy(
     if (state->arena)
         img_arena_destroy(state->arena);
 
-    if (engine && state->decoded.data)
+    if (engine && state->owns_decoded && state->decoded.data)
         img_runtime_release_raw_buffer(engine, &state->decoded);
 
     memset(state, 0, sizeof(*state));

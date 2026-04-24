@@ -75,6 +75,40 @@ extern "C"
         size_t *output_size);
 
     /*
+     * img_api_run_job_rgb24()
+     *
+     * Render from a pre-decoded RGB24 frame instead of invoking the decoder.
+     * `input_size` must match `stride * height`.
+     * `stride` may be 0 to mean `width * 3`.
+     */
+    img_result_t img_api_run_job_rgb24(
+        img_engine_t *engine,
+        const uint8_t *input,
+        size_t input_size,
+        uint32_t width,
+        uint32_t height,
+        uint32_t stride,
+        const char *output_path,
+        const img_job_t *job);
+
+    /*
+     * img_api_run_job_rgb24_raw()
+     *
+     * Same as img_api_run_job_rgb24(), but returns encoded output bytes
+     * in memory. The caller frees *output with img_encoded_free().
+     */
+    img_result_t img_api_run_job_rgb24_raw(
+        img_engine_t *engine,
+        const uint8_t *input,
+        size_t input_size,
+        uint32_t width,
+        uint32_t height,
+        uint32_t stride,
+        const img_job_t *job,
+        uint8_t **output,
+        size_t *output_size);
+
+    /*
      * img_api_process_raw()
      *
      * Low-level: decode → no-op pipeline → encode.

@@ -41,6 +41,7 @@ img_result_t img_decode_stb(
 
     // 🔥 CORRECT: construct buffer (not allocator misuse)
     out->data = mem;
+    out->owner_pool = ctx->local_pool;
     out->width = (uint32_t)w;
     out->height = (uint32_t)h;
     out->channels = 3;
