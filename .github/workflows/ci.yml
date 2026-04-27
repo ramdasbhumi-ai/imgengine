@@ -2,8 +2,10 @@ name: imgengine-ci
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]  # 👈 This allows EVERY branch to trigger the CI
   pull_request:
+    branches: ["**"]
+
 
 jobs:
   build-test:
