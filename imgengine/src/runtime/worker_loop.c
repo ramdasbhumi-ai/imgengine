@@ -1,3 +1,4 @@
+// ./src/runtime/worker_loop.c
 
 // ================================================================
 // FILE 4: src/runtime/worker_loop.c  (REPLACE)

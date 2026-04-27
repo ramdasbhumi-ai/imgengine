@@ -1,3 +1,4 @@
+// ./include/runtime/template_registry.h
 #ifndef IMGENGINE_RUNTIME_TEMPLATE_REGISTRY_H
 #define IMGENGINE_RUNTIME_TEMPLATE_REGISTRY_H
 

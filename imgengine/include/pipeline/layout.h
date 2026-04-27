@@ -1,3 +1,4 @@
+// ./include/pipeline/layout.h
 
 // ================================================================
 // FILE 3: include/pipeline/layout.h  (UPDATE public signature)

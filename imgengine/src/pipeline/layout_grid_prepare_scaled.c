@@ -1,3 +1,4 @@
+// ./src/pipeline/layout_grid_prepare_scaled.c
 
 // ================================================================
 // FILE 8: src/pipeline/layout_grid_prepare_scaled.c  (UPDATE)

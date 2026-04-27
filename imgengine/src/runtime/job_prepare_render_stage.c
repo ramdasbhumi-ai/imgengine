@@ -1,3 +1,4 @@
+// ./src/runtime/job_prepare_render_stage.c
 
 // ================================================================
 // FILE 1: src/runtime/job_prepare_render_stage.c  (REPLACE)

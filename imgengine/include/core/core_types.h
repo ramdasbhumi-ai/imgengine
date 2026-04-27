@@ -1,3 +1,4 @@
+// ./include/core/core_types.h
 // Aggregate header to expose core POD types in a single include
 // This header intentionally only re-exports existing core headers
 // so the rest of the codebase can depend on a single POD-focused

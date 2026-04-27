@@ -1,3 +1,4 @@
+// ./src/pipeline/layout_grid.c
 
 // ================================================================
 // FILE 9: src/pipeline/layout_grid.c  (UPDATE)

@@ -1,3 +1,4 @@
+// ./src/api/api_job_prepare_render_stage.c
 // ================================================================
 // FILE 10: src/api/api_job_prepare_render_stage.c
 // Bridge API to runtime render-stage prep.

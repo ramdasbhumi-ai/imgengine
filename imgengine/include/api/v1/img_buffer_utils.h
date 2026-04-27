@@ -1,4 +1,4 @@
-// ./api/v1/img_buffer_utils.h
+// ./include/api/v1/img_buffer_utils.h
 
 #ifndef IMGENGINE_IMG_BUFFER_UTILS_H
 #define IMGENGINE_IMG_BUFFER_UTILS_H

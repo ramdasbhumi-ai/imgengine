@@ -1,4 +1,4 @@
-// ./api/v1/img_plugin_api.h
+// ./include/api/v1/img_plugin_api.h
 // api/v1/img_plugin_api.h  (UPDATE — re-export)
 
 #ifndef IMGENGINE_PLUGIN_API_H

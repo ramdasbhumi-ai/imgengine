@@ -1,4 +1,4 @@
-// ./api/v1/img_job.h
+// ./include/api/v1/img_job.h
 
 // ================================================================
 // FILE: api/v1/img_job.h  (UPDATE — re-export from pipeline)

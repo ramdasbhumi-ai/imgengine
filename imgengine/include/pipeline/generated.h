@@ -1,3 +1,4 @@
+// ./include/pipeline/generated.h
 /* pipeline/generated.h — declaration for committed/generated pipelines */
 #ifndef IMGENGINE_PIPELINE_GENERATED_H
 #define IMGENGINE_PIPELINE_GENERATED_H

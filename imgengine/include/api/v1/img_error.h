@@ -1,4 +1,4 @@
-// ./api/v1/img_error.h
+// ./include/api/v1/img_error.h
 
 // ================================================================
 // Keeps backward compatibility for any external consumer.

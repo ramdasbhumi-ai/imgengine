@@ -1,3 +1,4 @@
+// ./src/runtime/template_registry.c
 #include "runtime/template_registry.h"
 
 #include "core/context_internal.h"

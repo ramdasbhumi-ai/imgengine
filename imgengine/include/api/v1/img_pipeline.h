@@ -1,4 +1,4 @@
-// ./api/v1/img_pipeline.h
+// ./include/api/v1/img_pipeline.h
 
 #ifndef IMGENGINE_API_PIPELINE_H
 #define IMGENGINE_API_PIPELINE_H

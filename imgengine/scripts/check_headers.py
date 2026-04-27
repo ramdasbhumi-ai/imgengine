@@ -23,7 +23,8 @@ errors = []
 
 def expected_header(path):
     rel = os.path.relpath(path, ENGINE_ROOT)
-    return f"// ./imgengine/{rel}"
+    return f"// ./{rel}"
+    # return f"// ./imgengine/{rel}"
 
 
 # ============================================================

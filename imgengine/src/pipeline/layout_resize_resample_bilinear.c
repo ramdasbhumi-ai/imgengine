@@ -1,3 +1,4 @@
+// ./src/pipeline/layout_resize_resample_bilinear.c
 
 // ================================================================
 // FILE 4: src/pipeline/layout_resize_resample_bilinear.c  (REPLACE)

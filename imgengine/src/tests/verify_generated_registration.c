@@ -1,3 +1,4 @@
+// ./src/tests/verify_generated_registration.c
 // Simple verification executable to ensure generated pipelines register into jump table.
 #include <stdio.h>
 #include <stdlib.h>

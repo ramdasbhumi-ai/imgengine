@@ -1,3 +1,4 @@
+// ./src/pipeline/layout_prepare_fit.c
 
 // ================================================================
 // FILE 7: src/pipeline/layout_prepare_fit.c  (UPDATE)
